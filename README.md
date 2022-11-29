@@ -8,12 +8,19 @@ Examples are provided in S3CIMA_example.ipynb.
 
 # run_scima log file 
 The model training parameters and outputs is written in a log file including:
+
 •	Best model validation accuracy  
+
 •	std of validation accuracies across models
+
 •	multi-cell inputs size
+
 •	Accuracy score on the test set 
+
 •	Anchor
+
 •	nset which is the number of anchor cell in each image.
+
 
 # plot_results output:
 •	clustered_filter_weights.pdf:
