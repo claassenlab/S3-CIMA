@@ -6,7 +6,6 @@ import numpy as np
 import os
 import sys
 import copy
-import itertools
 
 
 import tensorflow as tf
@@ -23,29 +22,21 @@ from sklearn.preprocessing import StandardScaler
 
 
 # Owned
-from utils_long import combine_samples, normalize_outliers_to_control
-from utils_long import cluster_profiles, keras_param_vector, keras_param_vector_longitudinal, cluster_profiles_longitudinal, cluster_profiles_longitudinal_shared_weights
-from utils_long import generate_subsets, generate_biased_subsets, generate_subsets_longitudinal
-from utils_long import get_filters_classification, get_filters_regression, get_filters_classification_longitudinal
-from utils_long import mkdir_p
+from utils import combine_samples, normalize_outliers_to_control
+from utils import cluster_profiles, keras_param_vector, keras_param_vector_longitudinal
+from utils import generate_subsets, generate_biased_subsets, generate_subsets_longitudinal
+from utils import get_filters_classification, get_filters_regression
+from utils import mkdir_p
 
 # setting the tensorflow randomseed
 
 #tf.random.set_seed(12345)
 
 
-class contrastive_parable_loss():
-
-    def __init__(self):
-        return None
 
 
-    def eval(self, y_true, y_pred):
-        return(K.sum((1-y_true)*.5*K.square(y_pred) - y_true*.5*K.square(y_pred)))
-
-
-class CellCnn_longitudinal:
-    """ Creates a Longitudinal CellCnn model.
+class CellCnn:
+    """ Creates a CellCnn model.
 
     Args:
         - ncell :
@@ -317,7 +308,7 @@ def train_model(ntime_points,train_samples, train_phenotypes, outdir,
 
     
     X_train, id_train = dict(), dict()
-    X_train_temp = dict()
+    #X_train_temp = dict()
     X_valid, id_valid = dict(), dict()
     z_scaler=dict()
     X = dict()
@@ -556,29 +547,6 @@ def train_model(ntime_points,train_samples, train_phenotypes, outdir,
         k = max(1, int(mp / 100. * ncell))
         print('Cells pooled: %d' % k)
 
-        # Number of filters for this run
-        #if useRandomHyperparm:        
-        # else:
-        #     try:
-        #         nfilter = nfilter_choice[irun]
-        #     except:
-        #         nfilter = nfilter_choice[0]
-        
-        # Number of cells pooled for this run
-        #if useRandomHyperparm:
-        
-        # else:
-        #     try:
-        #         mp = maxpool_percentages[irun]
-        #     except:
-        #         mp = maxpool_percentages[0]
-
-        # build the neural network
-        # tf.debugging.set_log_device_placement(True)
-        # mirrored_strategy = tf.distribute.MirroredStrategy()
-        
-        #with mirrored_strategy.scope():
-        #with strategy.scope():
         model = build_model(ntime_points, ncell, nmark, nfilter,
                                 coeff_l1, coeff_l2, k,
                                 dropout, dropout_p, regression, n_classes, lr, selection_type=selection_type,
@@ -718,23 +686,6 @@ def similarity(x, k):
     b = x[:, k:]
     return tf.math.log(a + eps) - tf.math.log(b + eps)
 
-def outer_log(x,k):
-    eps = K.epsilon()    
-    a = x[:,:k]
-    b=  x[:,k:]
-
-    # adding an extra empty dimension before broadcasting
-    x=tf.keras.layers.Reshape([1, x.shape[1]])(x)
-
-    # maintain the batch size and chaning the last two dimensions (H,W) 
-    broadcast_shape = tf.where([True, False, False],tf.shape(x), [0, k, k])
-
-    x1 = tf.expand_dims(a,axis=1)
-    x1_trans = tf.transpose(x1, perm=[0, 2, 1])
-    x11=tf.broadcast_to(x1_trans, broadcast_shape)
-    x2 = tf.expand_dims(b,axis=1)
-    x22=tf.broadcast_to(x2,broadcast_shape)  
-    return K.log(x11+eps) - K.log(x22+eps)
 
 
 def build_model(ntime_points, ncell, nmark, nfilter, coeff_l1, coeff_l2, k, dropout, dropout_p, regression, n_classes, lr=0.01,
@@ -745,7 +696,7 @@ def build_model(ntime_points, ncell, nmark, nfilter, coeff_l1, coeff_l2, k, drop
     x_t=dict()          # dictionary for the inputs
     pool=dict()         # dictionary for pooled response from the filters
     x_t_conv=dict()     # dictionary to store the convolution results applied to the inputs
-    time_residuals_simple = True
+    #time_residuals_simple = True
     
     
 
@@ -770,7 +721,7 @@ def build_model(ntime_points, ncell, nmark, nfilter, coeff_l1, coeff_l2, k, drop
             x_t_conv[str(nt)]=conv_share(x_t[str(nt)])
 
     else:
-        x_t_act=dict()
+        #x_t_act=dict()
         for nt in range(1, ntime_points+1):
             conv_not_share = layers.Conv1D(filters=nfilter,
                                            kernel_size=1,
@@ -797,7 +748,7 @@ def build_model(ntime_points, ncell, nmark, nfilter, coeff_l1, coeff_l2, k, drop
         concat_pool.append(pool[str(nt)])
 
     if (ntime_points>1):
-       merged_pool = Concatenate(axis=1)(concat_pool)
+       merged_pool = concat_pool
 
     else:
        merged_pool=pool[str(ntime_points)]
@@ -825,7 +776,8 @@ def build_model(ntime_points, ncell, nmark, nfilter, coeff_l1, coeff_l2, k, drop
        model = keras.Model(inputs=x_t[str(ntime_points)], outputs=output) 
     
     else:
-       exit('time point is 1')           
+       exit('time point is 1') 
+                     
     
     #print(model.summary())
     if not regression:

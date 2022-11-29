@@ -1,4 +1,5 @@
-""" Utility functions from CellCNN (2016-2017 ETH Zurich, Eirini Arvaniti and Manfred Claassen) edited by Sepideh Babaei
+
+""" Copyright 2016-2017 ETH Zurich, Eirini Arvaniti and Manfred Claassen.
 
 This module contains utility functions.
 
