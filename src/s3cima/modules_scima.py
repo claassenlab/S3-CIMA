@@ -19,6 +19,7 @@ import pickle
 
 from model import CellCnn
 from utils import  mkdir_p
+from sklearn.metrics import accuracy_score
 
 
 def spatial_input_per_sample(Anchor,image, pat, intensity, ct, x, y, cellid, K, label, OUTDIR):
@@ -452,7 +453,7 @@ def run_scima(Anchor, ntrain_per_class, K, k, nset_thr, labels, classes, path, n
     pickle.dump(test_pred, open(OUTDIR+'/model/test_pred.p','wb'))
     
     
-    from sklearn.metrics import accuracy_score
+   
     test_phenotypespre=np.argmax(test_pred, axis=1).astype(float)
     accuracy_score = accuracy_score(test_phenotypes,test_phenotypespre)
     #accuracy_score = accuracy_score(test_phenotypes,np.around(test_pred[:,1]))
