@@ -1,6 +1,8 @@
 # S3-CIMA
 Supervised Spatial Single-Cell Image Analysis for identification of disease associated cell type composition in the tissue microenvironment
 
+![alt text](https://ars.els-cdn.com/content/image/1-s2.0-S2666389923001988-fx1_lrg.jpg)
+
 S3-CIMA implements a weakly supervised CNN model to identify cell subsets whose frequency distinguishes the considered phenotype labels (i.e., disease associated conditions). The model is adopted from the CellCNN model (Arvaniti and Claassen, 2017), comprising a single layer CNN, a pooling layer and a classification or regression output, and using groups of cell expression profiles (multi-cell inputs) as input. 
 
 # Usage
