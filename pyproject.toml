@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = "3.11"
+requires-python = ">=3.11"
 dependencies = [
     "numpy (==1.26.4)",
     "pandas (==2.1.4)",
@@ -20,6 +20,11 @@ dependencies = [
     "pytest (>=9.0.1,<10.0.0)"
 ]
 
+[tool.poetry]
+version = "0.1.0"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
