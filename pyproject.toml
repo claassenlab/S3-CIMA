@@ -1,5 +1,5 @@
 [project]
-name = "s3-cima"
+name = "s3cima"
 version = "0.1.0"
 description = "Supervised Spatial Single-Cell Image Analysis for identification of disease associated cell type composition in the tissue microenvironment"
 authors = [
