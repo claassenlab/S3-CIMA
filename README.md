@@ -50,3 +50,15 @@ Cumulative distribution function of cell filter response for filter i. This plot
 A one-column text File indicating the corresponding filter response for each cell of the input data.
 
 
+ # Citation
+
+If you use S3-CIMA in your research, please cite our paper:
+
+Sepideh Babaei, Jonathan Christ, Vivek Sehra, Ahmad Makky, Mohammed Zidane, Kilian Wistuba-Hamprecht, Christian M. Schürch, Manfred Claassen,
+S3-CIMA: Supervised spatial single-cell image analysis for identifying disease-associated cell-type compositions in tissue, Patterns, Volume 4, Issue 9,
+2023, 100829, ISSN 2666-3899, [https://doi.org/10.1016/j.patter.2023.100829](https://www.sciencedirect.com/science/article/pii/S2666389923001988).
+
+
+# License
+
+S3-CIMA is released under the MIT License. See the LICENSE file for more details.
