@@ -1,5 +1,3 @@
-
-
 # Generic/Built-in
 
 import numpy as np
@@ -9,16 +7,13 @@ import copy
 
 
 import tensorflow as tf
-# Initialize Horovod
 from tensorflow import keras
 from tensorflow.keras import layers, initializers, regularizers, optimizers, callbacks
 
 
-#tf.random.set_seed(12345)
 from sklearn.utils import shuffle
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
-
 
 
 # Owned
@@ -27,12 +22,6 @@ from utils import cluster_profiles, keras_param_vector, keras_param_vector_longi
 from utils import generate_subsets, generate_biased_subsets, generate_subsets_longitudinal
 from utils import get_filters_classification, get_filters_regression
 from utils import mkdir_p
-
-# setting the tensorflow randomseed
-
-#tf.random.set_seed(12345)
-
-
 
 
 class CellCnn:
