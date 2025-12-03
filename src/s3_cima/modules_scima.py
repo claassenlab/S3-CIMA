@@ -13,8 +13,12 @@ python3 spatialinput.py --nn 200 --cnt 13
 """
 
 import numpy as np
-from utils import  mkdir_p
+import os, sys, errno
+from datetime import datetime
 import pickle
+
+from model import CellCnn
+from utils import  mkdir_p
 
 
 def spatial_input_per_sample(Anchor,image, pat, intensity, ct, x, y, cellid, K, label, OUTDIR):
@@ -171,12 +175,6 @@ def make_inputset(Sample_ID, Cell_ID, IDx, Dx, K, k ):
     pat_id = ([IDx]*nset)  
     return group_list,cell, pat_id, nset
 
-
-
-
-import os, sys, errno
-from datetime import datetime
-from model import CellCnn
 
 def run_scima(Anchor, ntrain_per_class, K, k, nset_thr, labels, classes, path, nrun, background):
 
@@ -374,7 +372,6 @@ def run_scima(Anchor, ntrain_per_class, K, k, nset_thr, labels, classes, path, n
             tg[i]= tg[i] + data 
          
         
-    
     specify_valid = True
     
     print('saving samples...')

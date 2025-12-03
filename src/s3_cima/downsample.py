@@ -4,7 +4,6 @@
 This module contains functions for downsampling.
 
 """
-
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.utils.extmath import row_norms
