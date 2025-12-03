@@ -1,0 +1,26 @@
+[project]
+name = "s3-cima"
+version = "0.1.0"
+description = "Supervised Spatial Single-Cell Image Analysis for identification of disease associated cell type composition in the tissue microenvironment"
+authors = [
+    {name = "gabriel-dvl",email = "gduvalkieffer@gmail.com"}
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = "3.11"
+dependencies = [
+    "numpy (==1.26.4)",
+    "pandas (==2.1.4)",
+    "scikit-learn (==1.7.2)",
+    "scipy (==1.16.3)",
+    "seaborn (==0.13.2)",
+    "matplotlib (==3.10.6)",
+    "statsmodels (==0.14.5)",
+    "tensorflow (==2.16.2)",
+    "pytest (>=9.0.1,<10.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
