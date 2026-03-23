@@ -4,5 +4,5 @@
 # import theano
 # theano.config.optimizer = 'fast_compile'
 
-__version__ = "0.1.0"
+__version__ = "0.1.5"
 
