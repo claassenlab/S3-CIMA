@@ -26,7 +26,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from sklearn.metrics import f1_score, balanced_accuracy_score
 
-
+from model import CellCNN
 
 # General functions ---------------------------------------------------------------
 
