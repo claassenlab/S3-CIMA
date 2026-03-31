@@ -9,8 +9,8 @@ import numpy as np
 import pandas as pd
 
 
-from s3cima.utils.dataset_utils import CIMADataset
-from s3cima.utils.model_utils import fit, set_seed
+from s3cima.utils.datasets import CIMADataset
+from s3cima.utils.model import fit, set_seed
 
 # Function ---------------------------------------------------------------
 

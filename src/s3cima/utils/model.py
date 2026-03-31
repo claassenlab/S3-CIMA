@@ -26,9 +26,9 @@ from torch.utils.data import DataLoader, Dataset, Subset
 
 from sklearn.metrics import f1_score, balanced_accuracy_score
 
-from s3cima.utils.dataset_utils import CIMADataset
-from s3cima.utils.dataset_utils import spatial_collate_fn, get_norm_stats
-from s3cima.utils.dataset_utils import make_patient_stratified_splits
+from s3cima.utils.datasets import CIMADataset
+from s3cima.utils.datasets import spatial_collate_fn, get_norm_stats
+from s3cima.utils.datasets import make_patient_stratified_splits
 
 from s3cima.model import CellCNN
 
