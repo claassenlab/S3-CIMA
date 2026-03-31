@@ -4,10 +4,11 @@ To use the original implementation, see branch '' in repo.
 """
 
 # Imports
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
-
-
-
+from .utils.model_utils import select_top_pool
 
 # Main model ------------------------------------------------
 
