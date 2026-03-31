@@ -41,7 +41,7 @@ def run_s3cima(
     seed: int = 420,
     save_path: str = ".",
     ):  
-    """Runs an S3-CIMA analysis
+    """Runs an S3-CIMA analysis TODO
 
     Args
     ----
