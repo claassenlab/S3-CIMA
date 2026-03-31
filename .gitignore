@@ -1,3 +1,7 @@
 S3CIMA/HCC_MAIT_STUDY/.ipynb_checkpoints
 dist
 toml_draft.txt
+tests/data/results_*
+.DS_Store
+
+__pycache__
