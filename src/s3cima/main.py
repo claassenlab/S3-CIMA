@@ -21,7 +21,7 @@ from utils.model_utils import train, validate, test, fit
 
 def run_s3cima(
     anchor: str,
-    image, pat, intensity, genes, ct, x, y, cellid, label,
+    image_id, sample_id, intensity, genes, cell_type, x, y, cell_id, label,
     K: int = 50,
     ncell : int = 30,
     random_ctrl: bool = True,
@@ -52,5 +52,35 @@ def run_s3cima(
     # Set seed
     set_seed(seed)
 
-    # Create dataset
-    dataset = CIMADataset()
+    # Create dataset from processed csv
+    dataset = CIMADataset(
+        anchor    = "Preneo",
+        image     = image_id,
+        pat       = sample_id,
+        intensity = intensity,
+        ct        = cell_type,
+        x         = x,
+        y         = y,
+        cellid    = cell_id,
+        K         = K,
+        ncell     = ncell,
+        label     = label,
+        random_ctrl = random_ctrl
+    )
+
+    # Fit the CIMA model from this dataset
+    preds, loss, val_loss, ba, val_ba, test_samples = fit(dataset,
+        anchor = "Preneo",
+        K = K,
+        ncell = ncell,
+        genes = genes,
+        n_val_folds=n_val_folds,
+        nruns=nruns,
+        background=random_ctrl,
+        batch_size = batch_size,
+        lr = lr,
+        epochs=epochs,
+        save_loc = save_path,
+        seed=seed)
+    
+    # Plot TODO
