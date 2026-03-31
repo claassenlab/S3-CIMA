@@ -18,26 +18,13 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, Dataset, Subset
+
+from sklearn.preprocessing import LabelEncoder
 from PIL import Image
 
 
 
 # Functions ---------------------------------------------------------------
-
-def set_seed(seed = 42):
-    """Fix the seeds for reproductible runs during training"""
-    np.random.seed(seed)
-    random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    # When running on the CuDNN backend, two further options must be set
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    # Set a fixed value for the hash seed
-    os.environ["PYTHONHASHSEED"] = str(seed)
-    print(f"Random seed set as {seed}")
-
 
 def check_cima_input_csv(
     meta: pd.DataFrame,
@@ -230,12 +217,16 @@ def process_csv(
     cell_type = meta[cell_type_col].values
     sample_id = meta[sample_id_col].values
     image_id = meta[image_id_col].values
+
     condition = meta[condition_col].values
+    encoder = LabelEncoder()
+    integer_labels = encoder.fit_transform(condition)
+    mapping = dict(zip(encoder.classes_, range(len(encoder.classes_))))
 
     print(f"[INFO] Final output: {intensity.shape[0]} cells × "
           f"{intensity.shape[1]} markers.")
 
-    return intensity, genes, x, y, cell_id, cell_type, sample_id, image_id, condition
+    return intensity, genes, x, y, cell_id, cell_type, sample_id, image_id, integer_labels, mapping
 
 
 def _relu(x):
