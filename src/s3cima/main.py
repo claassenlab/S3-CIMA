@@ -13,7 +13,7 @@ from utils.dataset_utils import CIMADataset, NormalizedCIMASubset
 from utils.dataset_utils import spatial_collate_fn, get_norm_stats
 from utils.dataset_utils import make_patient_stratified_splits
 
-from utils.model_utils import EarlyStopping
+from utils.model_utils import EarlyStopping, set_seed
 from utils.model_utils import get_discriminative_filters, select_top_pool
 from utils.model_utils import train, validate, test, fit
 
@@ -48,7 +48,9 @@ def run_s3cima(
 
     Returns
     -------
-    
-    
-    
     """
+    # Set seed
+    set_seed(seed)
+
+    # Create dataset
+    dataset = CIMADataset()
