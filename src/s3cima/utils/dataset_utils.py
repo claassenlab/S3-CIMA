@@ -51,7 +51,6 @@ class CIMADataset(Dataset):
         K: int,
         ncell : int,
         random_ctrl: bool = False,
-        ctrl_label: Union[str, float] = None,
         task: str = "classification",
         seed: int = 12345,
     ):
@@ -64,7 +63,6 @@ class CIMADataset(Dataset):
         self.ncell = ncell
         self.label = label
         self.random_ctrl = random_ctrl
-        self.ctrl_label = ctrl_label
         self.rng = np.random.default_rng(seed)
 
         # resolve label type
@@ -73,6 +71,13 @@ class CIMADataset(Dataset):
 
         # --- collect anchor indices per image, build KD-trees once --------
         self.samples = []
+
+        # Set control label
+        if random_ctrl:
+            ctrl_label = len(set(self.label))
+            encoded_ctrl = self._encode_label(ctrl_label)
+            print(encoded_ctrl)
+
 
         for img_id in np.unique(image):
             mask = image == img_id
@@ -108,13 +113,6 @@ class CIMADataset(Dataset):
                 })
             # Background control cells (aka non-anchor cells)
             if random_ctrl:
-                if ctrl_label is None:
-                    raise ValueError("If random_ctrl is True, ctrl_label must be provided.")
-                try:
-                    encoded_ctrl = self._encode_label(ctrl_label)
-                except Exception as e:
-                    raise ValueError(f"Failed to encode ctrl_label '{ctrl_label}': {e}. \n"
-                                     "Make sure ctrl_label is encoded as an integer class")
                 for idx in ctrl_idx:
                     knn_int, knn_ids = self._query(idx, tree, img_int, img_cellid)
                     self.samples.append({
