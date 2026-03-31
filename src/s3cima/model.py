@@ -8,8 +8,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .utils.model_utils import select_top_pool
-
 # Main model ------------------------------------------------
 
 class CellCNN(nn.Module):
@@ -76,3 +74,27 @@ class CellCNN(nn.Module):
         if self.dropout is not None:
             x = self.dropout(x)
         return self.fc(x)                        # (B, n_classes) or (B, 1)
+    
+
+def select_top_pool(x: torch.Tensor, k: int, selection_type: str = "mean") -> torch.Tensor:
+    """
+    Pools the top-k activated cells per filter.
+
+    Parameters
+    ----------
+    x              : (B, nfilter, ncell) — output of Conv1d after ReLU
+    k              : number of top cells to select per filter
+    selection_type : 'mean' or 'max'
+
+    Returns
+    -------
+    (B, nfilter) pooled representation
+    """
+    # topk over the cell dimension (dim=2)
+    topk_vals, _ = torch.topk(x, k=k, dim=2)   # (B, nfilter, k)
+    if selection_type == "mean":
+        return topk_vals.mean(dim=2)             # (B, nfilter)
+    elif selection_type == "max":
+        return topk_vals[:, :, 0]               # (B, nfilter)
+    else:
+        raise ValueError(f"selection_type must be 'mean' or 'max', got '{selection_type}'")

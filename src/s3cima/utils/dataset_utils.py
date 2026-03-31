@@ -157,35 +157,6 @@ class CIMADataset(Dataset):
         return self.samples[idx]
 
 
-def spatial_collate_fn(batch):
-    return {
-        "intensity": torch.stack([s["intensity"] for s in batch]),  # (B, K, M)
-        "cellids":   [s["cellids"] for s in batch],
-        "pat":       [s["pat"]     for s in batch],
-        "label":     torch.stack([s["label"]     for s in batch]),  # (B,) long or float32
-        "is_ctrl":   [s["is_ctrl"] for s in batch],
-    }
-
-
-def get_norm_stats(dataset: CIMADataset, train_idx: list):
-    """
-    Calculates mean and std of intensities across all training samples.
-    """
-    # Collect intensities from the specified training indices
-    train_intensities = torch.stack([dataset.samples[i]["intensity"] for i in train_idx])
-    
-    # Calculate marker-wise stats
-    flat_intensities = train_intensities.view(-1, train_intensities.shape[-1])
-    
-    mean = flat_intensities.mean(dim=0)
-    std = flat_intensities.std(dim=0)
-    
-    # safety
-    std[std == 0] = 1.0
-    
-    return mean, std
-
-
 class NormalizedCIMASubset(Dataset):
     def __init__(self, subset: Subset, mean: torch.Tensor, std: torch.Tensor):
         """
@@ -213,6 +184,35 @@ class NormalizedCIMASubset(Dataset):
             "is_ctrl":   sample["is_ctrl"],
             "cellids":   sample["cellids"]
         }
+
+
+def spatial_collate_fn(batch):
+    return {
+        "intensity": torch.stack([s["intensity"] for s in batch]),  # (B, K, M)
+        "cellids":   [s["cellids"] for s in batch],
+        "pat":       [s["pat"]     for s in batch],
+        "label":     torch.stack([s["label"]     for s in batch]),  # (B,) long or float32
+        "is_ctrl":   [s["is_ctrl"] for s in batch],
+    }
+
+
+def get_norm_stats(dataset: CIMADataset, train_idx: list):
+    """
+    Calculates mean and std of intensities across all training samples.
+    """
+    # Collect intensities from the specified training indices
+    train_intensities = torch.stack([dataset.samples[i]["intensity"] for i in train_idx])
+    
+    # Calculate marker-wise stats
+    flat_intensities = train_intensities.view(-1, train_intensities.shape[-1])
+    
+    mean = flat_intensities.mean(dim=0)
+    std = flat_intensities.std(dim=0)
+    
+    # safety
+    std[std == 0] = 1.0
+    
+    return mean, std
 
 
 def make_patient_stratified_splits(

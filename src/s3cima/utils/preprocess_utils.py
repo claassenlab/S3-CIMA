@@ -10,18 +10,8 @@ from typing import Iterable
 
 import numpy as np
 import pandas as pd
-from scipy import stats
-from scipy.cluster.hierarchy import linkage, fcluster
-from scipy.spatial.distance import pdist, cdist
-
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import DataLoader, Dataset, Subset
 
 from sklearn.preprocessing import LabelEncoder
-from PIL import Image
-
 
 
 # Functions ---------------------------------------------------------------
@@ -227,52 +217,3 @@ def process_csv(
           f"{intensity.shape[1]} markers.")
 
     return intensity, genes, x, y, cell_id, cell_type, sample_id, image_id, integer_labels, mapping
-
-
-def _relu(x):
-    return np.maximum(0, x)
-
-
-def _single_filter_output(conv_w, bias, out_w, valid_samples, mp):
-    """
-    conv_w  : (nmark,)   — filter weights
-    bias    : float      — filter bias
-    out_w   : (n_classes,) — output weights for this filter
-    mp      : float      — max-pooling percentage (0-100)
-    """
-    y_pred = np.zeros(len(valid_samples))
-    for i, x in enumerate(valid_samples):
-        # x shape: (ncell, nmark)
-        g = _relu(x @ conv_w + bias)               # (ncell,)
-        ntop = max(1, int(mp / 100. * x.shape[0]))
-        gpool = np.mean(np.sort(g)[-ntop:])            # scalar
-        y_pred[i] = gpool
-    dominant_class = int(np.argmax(out_w))
-    return y_pred, dominant_class
-
-
-def _compute_filter_diff(consensus_conv, consensus_out, consensus_biases,
-                          valid_samples, valid_phenotypes, mp):
-    """
-    Returns filter_diff array of shape (n_consensus_filters,).
-    """
-    y_true      = np.array(valid_phenotypes)
-    filter_diff = np.zeros(len(consensus_conv))
-
-    for i, (conv_w, out_w, bias) in enumerate(
-            zip(consensus_conv, consensus_out, consensus_biases)):
-        y_pred, filter_class = _single_filter_output(
-            conv_w, bias, out_w, valid_samples, mp
-        )
-        in_class  = y_true == filter_class
-        out_class = ~in_class
-        if in_class.sum() == 0 or out_class.sum() == 0:
-            filter_diff[i] = 0.0   # degenerate case
-        else:
-            filter_diff[i] = np.mean(y_pred[in_class]) - np.mean(y_pred[out_class])
-
-    return filter_diff
-
-
-
-
