@@ -29,23 +29,15 @@ conda install python=3.11 numpy pandas scipy pytorch scikit-learn tqdm matplotli
 # Usage
 Examples are provided in cima_example.ipynb. Further guidance and documentation to be added soon. 
 
-# run_scima log file 
+## run_scima log file 
 The model training parameters and outputs is written in a log file including:
 
-•	Best model validation accuracy  
+•	Important parameters such as K, ncell and anchor celltype
 
-•	std of validation accuracies across models
-
-•	multi-cell inputs size
-
-•	Balanced accuracy score on the test set 
-
-•	Anchor
-
-•	nset which is the number of anchor cell in each image.
+•	Balanced accuracy score on the train/validation/test set 
 
 
-# plot_results output:
+## plot_results output:
 
 Plotting not yet added ! Will be done very soon.
 
