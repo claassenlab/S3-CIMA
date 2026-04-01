@@ -16,7 +16,6 @@ dependencies = [
     "matplotlib",
     "plotly",
     "tqdm",
-    "statsmodels",
     "torch",
     "pytest"
 ]
