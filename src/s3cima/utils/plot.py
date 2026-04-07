@@ -117,7 +117,7 @@ def plot_filter_weights(
     return fig
 
 
-def get_high_response_cells(
+def get_high_response_cells_test(
     meta: list,
     dataset,
     genes: list,
@@ -125,7 +125,7 @@ def get_high_response_cells(
 ) -> dict:
     """
     For each consensus filter cluster, compute the pooled filter response
-    for every non-background neighbourhood in the dataset, threshold at
+    for every non-background neighbourhood in the test dataset, threshold at
     the filter_threshold quantile, and return the cell IDs of the
     high-responding neighbourhoods.
 
@@ -134,7 +134,7 @@ def get_high_response_cells(
     meta             : list of dicts — 'meta' key from extract_and_save_filters.
                        Each dict must contain 'all_gene_weights', 'cluster',
                        'dominant_class'. Optionally 'maxpool_percentage'.
-    dataset          : CIMADataset or NormalizedCIMASubset — samples must be
+    dataset          : NormalizedCIMASubset — samples must be
                        dicts with keys 'intensity', 'is_ctrl', 'cellids'.
     genes            : list of str — marker names in the same order as the
                        intensity columns used during training.
@@ -156,9 +156,7 @@ def get_high_response_cells(
     assert 0.0 <= filter_threshold < 1.0, \
         "filter_threshold must be in [0, 1)"
 
-    # ----------------------------------------------------------------
-    # 1. Collect all non-background samples
-    # ----------------------------------------------------------------
+    # Collect non-background samples
     anchor_intensities = []
     anchor_cellids = []
     anchor_labels = [] 
@@ -191,9 +189,137 @@ def get_high_response_cells(
           f"{len(anchor_intensities)} anchor neighbourhoods "
           f"across {len(meta)} filter clusters.")
 
-    # ----------------------------------------------------------------
-    # 2. Compute per-neighbourhood response for each consensus filter
-    # ----------------------------------------------------------------
+    # Neighbourhood responses
+    results = {}
+
+    for m in meta:
+        filter_diff = m["filter_diff"]
+        cluster_id = m["cluster"]
+        gene_weights = m["all_gene_weights"]   # {gene: weight}, |w|-ranked order
+        mp = m.get("maxpool_percentage", 100.0)
+        ntop_frac = mp / 100.0
+
+        # Reconstruct conv_w in original marker column order
+        conv_w = np.array(
+            [gene_weights[g] for g in genes], dtype=np.float32
+        )
+
+        # Compute pooled ReLU activation for each neighbourhood
+        responses = np.zeros(len(anchor_intensities), dtype=np.float32)
+        for i, x in enumerate(anchor_intensities):
+            g  = np.maximum(0.0, x @ conv_w)
+            ntop = max(1, int(ntop_frac * x.shape[0]))
+            responses[i]  = np.mean(np.sort(g)[-ntop:])
+
+        # Collect responsive cell IDs
+        threshold_val = float(np.quantile(responses, filter_threshold))
+        high_idx = np.where(responses >= threshold_val)[0]
+
+        # Flatten and deduplicate cell IDs across high-responding neighbourhoods
+        seen = set()
+        unique_cell_ids = []
+        for idx in high_idx:
+            for cid in anchor_cellids[idx]:
+                if cid not in seen:
+                    seen.add(cid)
+                    unique_cell_ids.append(cid)
+
+        results[cluster_id] = {
+            "cell_ids": unique_cell_ids,
+            "responses": responses[high_idx],
+            "all_responses": responses,
+            "threshold_val": threshold_val,
+            "n_neighbourhoods_above": len(high_idx),
+            "n_cell_ids": len(unique_cell_ids),
+            "filter_diff": filter_diff,
+        }
+
+        print(f"  [Cluster {cluster_id}]  "
+              f"threshold={threshold_val:.4f} | "
+              f"{len(unique_cell_ids)} unique cell IDs")
+        
+    # ALso save sample info
+    results["samples"] = set(anchor_samples)
+
+    return results
+
+
+def get_high_response_cells_train(
+    meta: list,
+    validation_splits: list,
+    genes: list,
+    filter_threshold: float = 0.9,
+) -> dict:
+    """
+    For each consensus filter cluster, compute the pooled filter response
+    for every non-background neighbourhood in the whole dataset, threshold at
+    the filter_threshold quantile, and return the cell IDs of the
+    high-responding neighbourhoods.
+
+    Parameters
+    ----------
+    meta             : list of dicts — 'meta' key from extract_and_save_filters.
+                       Each dict must contain 'all_gene_weights', 'cluster',
+                       'dominant_class'. Optionally 'maxpool_percentage'.
+    validation_splits: list of tuples — each tuple contains (train_subset, val_subset)
+    genes            : list of str — marker names in the same order as the
+                       intensity columns used during training.
+    filter_threshold : float in [0, 1) — responses below this quantile are
+                       discarded. Default 0.9 retains the top 10%.
+
+    Returns
+    -------
+    dict keyed by cluster_id, each value:
+        {
+          "cell_ids"                : list — unique cell IDs with high response,
+          "responses"               : np.array — activations of high neighbourhoods,
+          "all_responses"           : np.array — full activation distribution,
+          "threshold_val"           : float — quantile cutoff used,
+          "n_neighbourhoods_above"  : int,
+          "n_cell_ids"              : int,
+        }
+    """
+    assert 0.0 <= filter_threshold < 1.0, \
+        "filter_threshold must be in [0, 1)"
+
+    # Non-background samples
+    anchor_intensities = []
+    anchor_cellids = []
+    anchor_labels = [] 
+    anchor_samples = []
+
+    # Take only the first validation split
+    split = validation_splits[0]
+
+    for dataset in split:
+        for item in dataset:
+            if item["is_ctrl"]:
+                continue
+            anchor_intensities.append(item["intensity"].numpy())  # (ncell, nmark)
+            anchor_cellids.append(item["cellids"])                # list of cell IDs
+            anchor_labels.append(int(item["label"].item()))
+            anchor_samples.append(item["pat"].item())
+
+    anchor_labels = np.array(anchor_labels)
+
+    if len(anchor_intensities) == 0:
+        raise ValueError(
+            "No non-background samples found. Check the is_ctrl flag."
+        )
+
+    nmark = anchor_intensities[0].shape[1]
+    if len(genes) != nmark:
+        raise ValueError(
+            f"len(genes)={len(genes)} does not match intensity nmark={nmark}. "
+            "Ensure genes are provided in the same column order as the "
+            "intensity matrix used during training."
+        )
+
+    print(f"[INFO] Computing filter responses over "
+        f"{len(anchor_intensities)} anchor neighbourhoods "
+        f"across {len(meta)} filter clusters.")
+
+    # Response
     results = {}
 
     for m in meta:
@@ -215,9 +341,7 @@ def get_high_response_cells(
             ntop          = max(1, int(ntop_frac * x.shape[0]))
             responses[i]  = np.mean(np.sort(g)[-ntop:])
 
-        # ----------------------------------------------------------------
-        # 3. Threshold and collect high-response cell IDs
-        # ----------------------------------------------------------------
+        # Threshold
         threshold_val = float(np.quantile(responses, filter_threshold))
         high_idx      = np.where(responses >= threshold_val)[0]
 
@@ -243,20 +367,22 @@ def get_high_response_cells(
         print(f"  [Cluster {cluster_id}]  "
               f"threshold={threshold_val:.4f} | "
               f"{len(unique_cell_ids)} unique cell IDs")
-
-    return results, set(anchor_samples)
+    
+    # ALso save sample info
+    results["samples"] = set(anchor_samples)
+    return results
 
 
 def save_high_response_stats(
     high_response: dict,
     df: pd.DataFrame,
-    test_sample_ids: set,
     x_col: str,
     y_col: str,
     cell_id_col: str,
     cell_type_col: str,
     sample_id_col: str,
     save_path: str = ".",
+    test: bool = True
 ):
     """
     For each consensus filter cluster and each sample, saves:
@@ -271,15 +397,21 @@ def save_high_response_stats(
     ----------
     high_response  : dict — output of get_high_response_cells, keyed by cluster_id
     cells_csv      : str  — path to cell metadata CSV
-    test_sample_ids: set  - test sample ids to filter the dataframe
     x_col          : str  — column name for x coordinate
     y_col          : str  — column name for y coordinate
     cell_id_col    : str  — column name for cell ID
     cell_type_col  : str  — column name for cell type
     sample_id_col  : str  — column name for sample/image ID
     save_path      : str  — root directory for outputs
+    test           : bool — if True, saves under <save_path>/test/; else under <save_path>/train/
     """
-    os.makedirs(save_path, exist_ok=True)
+    if test:
+        save_path = f"{save_path}/test"
+        os.makedirs(save_path, exist_ok=True)
+    else:
+        save_path = f"{save_path}/train"
+        os.makedirs(save_path, exist_ok=True)
+
 
     # Cell metadata
     required_cols = {x_col, y_col, cell_id_col, cell_type_col, sample_id_col}
@@ -287,8 +419,10 @@ def save_high_response_stats(
     if missing:
         raise ValueError(f"Missing columns in CSV: {missing}")
     
-    # Filter dataframe by sample ids
-    df = df[df[sample_id_col].isin(test_sample_ids)].copy()
+    # Filter dataframe by sample ids and rm the key
+    sample_ids = high_response["samples"]
+    del high_response["samples"]
+    df = df[df[sample_id_col].isin(sample_ids)].copy()
     if df.empty:
         raise ValueError("No rows left after filtering by test_sample_ids.")
 
@@ -323,9 +457,7 @@ def save_high_response_stats(
             sample_dir = os.path.join(cluster_dir, f"sample_{sample_id}")
             os.makedirs(sample_dir, exist_ok=True)
 
-            # ------------------------------------------------------------
-            # a) Selected cells — full rows
-            # ------------------------------------------------------------
+            # Create selected cells CSV per cluster
             sel_cells.drop(columns=["_selected"]).to_csv(
                 os.path.join(sample_dir, "selected_cells.csv"), index=False
             )
@@ -337,9 +469,7 @@ def save_high_response_stats(
             fig.savefig(os.path.join(sample_dir, "spatial_plot.png"))
             plt.close(fig)
 
-            # ------------------------------------------------------------
-            # b) Cell type counts and proportions in selected cells
-            # ------------------------------------------------------------
+            # Celltype counts
             ct_counts = (
                 sel_cells[cell_type_col]
                 .value_counts()
@@ -420,6 +550,8 @@ def save_high_response_stats(
             )
             print(f"[Cluster {cluster_id}] Summary saved → "
                   f"{os.path.join(cluster_dir, 'enrichment_summary.csv')}")
+            
+    return save_path
             
 
 def enrichment_summary(save_path: str, output_file: str = None) -> str:
