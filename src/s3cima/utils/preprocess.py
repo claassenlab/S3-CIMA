@@ -57,26 +57,26 @@ def check_cima_input_csv(
         )
 
     # NaNs
-    meta_nan_mask    = meta.isna().any(axis=1)
+    meta_nan_mask = meta.isna().any(axis=1)
     markers_nan_mask = markers.isna().any(axis=1)
-    combined_nan     = meta_nan_mask | markers_nan_mask
-    n_nan            = combined_nan.sum()
+    combined_nan = meta_nan_mask | markers_nan_mask
+    n_nan = combined_nan.sum()
 
     if n_nan > 0:
         print(f"[WARNING] {n_nan} rows contain NaN values and will be removed.")
         print(f"  NaNs in meta:    {meta_nan_mask.sum()} rows")
         print(f"  NaNs in markers: {markers_nan_mask.sum()} rows")
-        meta    = meta[~combined_nan].reset_index(drop=True)
+        meta = meta[~combined_nan].reset_index(drop=True)
         markers = markers[~combined_nan].reset_index(drop=True)
         print(f"  Remaining rows after removal: {len(meta)}")
 
     # Log norm ?
     marker_vals = markers.values.astype(float)
 
-    has_negatives  = (marker_vals < 0).any()
-    global_max     = marker_vals.max()
-    global_min     = marker_vals.min()
-    global_mean    = marker_vals.mean()
+    has_negatives = (marker_vals < 0).any()
+    global_max = marker_vals.max()
+    global_min = marker_vals.min()
+    global_mean = marker_vals.mean()
 
     if has_negatives:
         warnings.warn(
@@ -203,12 +203,12 @@ def process_csv(
 
     x = meta[x_col].values.astype(np.float32)
     y = meta[y_col].values.astype(np.float32)
-    cell_id = meta[cell_id_col].values
-    cell_type = meta[cell_type_col].values
-    sample_id = meta[sample_id_col].values
-    image_id = meta[image_id_col].values
+    cell_id = meta[cell_id_col].values.astype(str)
+    cell_type = meta[cell_type_col].values.astype(str)
+    sample_id = meta[sample_id_col].values.astype(str)
+    image_id = meta[image_id_col].values.astype(str)
 
-    condition = meta[condition_col].values
+    condition = meta[condition_col].values.astype(str)
     encoder = LabelEncoder()
     integer_labels = encoder.fit_transform(condition)
     mapping = dict(zip(encoder.classes_, range(len(encoder.classes_))))
