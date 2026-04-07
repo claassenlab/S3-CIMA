@@ -949,11 +949,7 @@ report classification:
 
     # Now using these results, we can test the top filters on test
     # and report classification.
-    sorted_meta = sorted(
-        filter_results["meta"],
-        key=lambda m: m["filter_diff"],
-        reverse=True
-    )
+    filtered_meta = [m for m in filter_results["meta"] if m["discriminative"]]
 
     t_loader = DataLoader(
         test_subset, batch_size=batch_size, shuffle=False, num_workers=num_workers
@@ -961,15 +957,8 @@ report classification:
 
     final_results = []
     counter = 0
-    for r in sorted_meta:
-
-        # If filter discrimination < 0, skip: 
-        if r["filter_diff"] < 0:
-            with open(log_file, "a") as log:
-                log.write(f"\n[INFO] Skipping cluster {r['cluster']}"
-                          f"with filter_diff {r['filter_diff']:.4f} < 0\n")
-            continue
-
+    for r in filtered_meta:
+        
         run_of_origin = r["source_run"]
 
         ckpt_path = f"{save_model}/best_model_run{run_of_origin}.pth"
@@ -1013,11 +1002,11 @@ report classification:
 
     if len(final_results) == 0:
         print(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
-        print(f"Returning all filters")
+        print(f"Returning all discriminative filters")
 
         with open(log_file, "a") as log:
             log.write(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
 
-        final_results = sorted_meta
+        final_results = filtered_meta
 
     return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds, result_folder
