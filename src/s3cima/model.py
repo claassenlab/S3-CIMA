@@ -1,6 +1,6 @@
 """Re-implementation of S3-CIMA in Pytorch.
 
-To use the original implementation, see branch '' in repo.
+To use the original implementation, see branch 'legacy' in repo.
 """
 
 # Imports
