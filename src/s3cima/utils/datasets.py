@@ -52,7 +52,7 @@ class CIMADataset(Dataset):
         ncell : int,
         random_ctrl: bool = False,
         task: str = "classification",
-        seed: int = 12345,
+        seed: int = 420,
         bg_sets: int = 500,
     ):
         # Task input check
