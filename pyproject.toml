@@ -15,6 +15,7 @@ dependencies = [
     "scipy",
     "matplotlib",
     "plotly",
+    "nbformat (>=4.2.0)",
     "tqdm",
     "torch",
     "pytest"
