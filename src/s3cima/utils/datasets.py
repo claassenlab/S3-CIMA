@@ -89,12 +89,12 @@ class CIMADataset(Dataset):
             mask = image == img_id
             ix   = np.where(mask)[0]
 
-            img_x      = x[ix]
-            img_y      = y[ix]
-            img_int    = intensity[ix]
-            img_ct     = ct[ix]
+            img_x = x[ix]
+            img_y = y[ix]
+            img_int = intensity[ix]
+            img_ct = ct[ix]
             img_cellid = cellid[ix]
-            img_pat    = np.unique(pat[ix])[0]
+            img_pat = np.unique(pat[ix])[0]
             img_labels = label[ix]
 
             coords = np.stack([img_x, img_y], axis=1)
@@ -107,11 +107,6 @@ class CIMADataset(Dataset):
             else:
                 anchor_idx = np.where(img_ct == anchor)[0]
 
-            all_idx    = np.arange(len(img_ct))
-            non_anchor = np.delete(all_idx, anchor_idx)
-            ctrl_idx   = self.rng.choice(
-                non_anchor, size=len(anchor_idx), replace=False
-            )
             # Selecting the actual anchor cells
             for idx in anchor_idx:
                 knn_int, knn_ids = self._query(idx, tree, img_int, img_cellid)
@@ -125,6 +120,13 @@ class CIMADataset(Dataset):
                 })
             # Background control cells (aka non-anchor cells)
             if random_ctrl:
+
+                all_idx    = np.arange(len(img_ct))
+                non_anchor = np.delete(all_idx, anchor_idx)
+                ctrl_idx   = self.rng.choice(
+                    non_anchor, size=len(anchor_idx), replace=False
+                )   
+
                 for idx in ctrl_idx:
                     knn_int, knn_ids = self._query(idx, tree, img_int, img_cellid)
                     self.samples.append({
