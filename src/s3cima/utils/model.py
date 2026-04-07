@@ -1013,4 +1013,4 @@ report classification:
 
         final_results = sorted_meta
 
-    return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset
+    return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds
