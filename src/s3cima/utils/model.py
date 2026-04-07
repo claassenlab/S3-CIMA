@@ -939,7 +939,7 @@ Discriminative filters found
 A total of {len(filter_results['meta'])} filter clusters identified. 
 --------------------------------------------------------------------
 
-Running the models producing the top 3 most discriminative filters on test to 
+Running the models producing the top discriminative filters on test to 
 report classification: 
 """)
                 
@@ -947,7 +947,7 @@ report classification:
     # 3. Validate on the test
     # ----------------------------------------------------------------
 
-    # Now using these results, we can test the top3 most discriminative filters on test
+    # Now using these results, we can test the top filters on test
     # and report classification.
     sorted_meta = sorted(
         filter_results["meta"],
@@ -962,6 +962,13 @@ report classification:
     final_results = []
     counter = 0
     for r in sorted_meta:
+
+        # If filter discrimination < 0, skip: 
+        if r["filter_diff"] < 0:
+            with open(log_file, "a") as log:
+                log.write(f"\n[INFO] Skipping cluster {r['cluster']}"
+                          f"with filter_diff {r['filter_diff']:.4f} < 0\n")
+            continue
 
         run_of_origin = r["source_run"]
 
