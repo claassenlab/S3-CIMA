@@ -674,7 +674,7 @@ def fit(dataset: CIMADataset,               # CIMA Args
         K: int,
         ncell: int,
         genes: list,
-        save_loc,
+        save_loc: str,
         nruns: int = 5, 
         dendrogram_cutoff: float = 0.4,
         n_val_folds: int = 3,              
@@ -973,13 +973,13 @@ report classification:
         params = torch.load(ckpt_path, map_location=device, weights_only=False)
 
         model = CellCNN(
-            nmark        = params["nmarkers"],
-            nfilter      = params["nfilter"],
-            k            = params["k"],
-            n_classes    = params["n_classes"],
-            dropout      = params["dropout"],
-            dropout_p    = params["dropout_p"],
-            regression   = params["regression"],
+            nmark = params["nmarkers"],
+            nfilter = params["nfilter"],
+            k = params["k"],
+            n_classes = params["n_classes"],
+            dropout = params["dropout"],
+            dropout_p = params["dropout_p"],
+            regression = params["regression"],
             selection_type = params["selection_type"],
         )
         model.load_state_dict(params["model_state_dict"])
@@ -1013,4 +1013,4 @@ report classification:
 
         final_results = sorted_meta
 
-    return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds
+    return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds, result_folder
