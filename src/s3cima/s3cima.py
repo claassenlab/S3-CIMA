@@ -11,6 +11,7 @@ import pandas as pd
 
 from s3cima.utils.datasets import CIMADataset
 from s3cima.utils.model import fit, set_seed
+import s3cima.utils.plot as s3cima_plot 
 
 # Function ---------------------------------------------------------------
 
@@ -26,6 +27,7 @@ def run_s3cima(
     n_val_folds: int = 3,              
     maxpool_percentages : list = [0.01, 1, 5, 20, 100],
     nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
+    filter_threshold: float = 0.9,
     batch_size = 256,
     lr: float = 0.1,
     epochs: int = 20, 
@@ -64,7 +66,7 @@ def run_s3cima(
     )
 
     # Fit the CIMA model from this dataset
-    preds, loss, val_loss, ba, val_ba, test_samples = fit(dataset,
+    results, loss, val_loss, ba, val_ba, test_samples, validation_folds = fit(dataset,
         anchor = anchor,
         K = K,
         ncell = ncell,
@@ -84,4 +86,16 @@ def run_s3cima(
         save_loc = save_path,
         seed=seed)
     
-    # Plot TODO
+    # Calculate cell filter response and plot
+    s3cima_plot.plot_filter_weights(results["meta"],
+                                    show=False, 
+                                    save_path=save_path)   
+    res_test = s3cima_plot.get_high_response_cells_test(results["meta"], 
+                                            test_samples, 
+                                            genes, 
+                                            filter_threshold=filter_threshold)
+    res_train = s3cima_plot.get_high_response_cells_train(results["meta"], 
+                                              validation_folds, 
+                                              genes, 
+                                              filter_threshold=filter_threshold)
+
