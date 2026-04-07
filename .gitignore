@@ -3,5 +3,6 @@ dist
 toml_draft.txt
 tests/data/results_*
 .DS_Store
+private_cima_test.ipynb
 
 __pycache__
