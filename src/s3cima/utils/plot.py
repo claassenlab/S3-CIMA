@@ -375,143 +375,140 @@ def get_high_response_cells_train(
 
 def save_high_response_stats(
     high_response: dict,
-    df: pd.DataFrame,
-    x_col: str,
-    y_col: str,
-    cell_id_col: str,
-    cell_type_col: str,
-    sample_id_col: str,
+    x: np.ndarray,
+    y: np.ndarray,
+    cell_id: np.ndarray,
+    cell_type: np.ndarray,
+    sample_id: np.ndarray,
     save_path: str = ".",
-    test: bool = True
+    test: bool = True,
 ):
     """
     For each consensus filter cluster and each sample, saves:
-      a) selected_cells.csv     — full rows of high-response cells
+      a) selected_cells.csv     — x, y, cell_id, cell_type of high-response cells
       b) cell_type_counts.csv   — count and proportion of each cell type
                                   in the selected cells
-      c) enrichment.csv         — per cell type enrichment score:
-                                  prop_selected / prop_background
-                                  (log2 fold-change style, with pseudocount)
+      c) enrichment.csv         — per cell type log2 enrichment score
+                                  (prop_selected / prop_background + pseudocount)
 
     Parameters
     ----------
-    high_response  : dict — output of get_high_response_cells, keyed by cluster_id
-    cells_csv      : str  — path to cell metadata CSV
-    x_col          : str  — column name for x coordinate
-    y_col          : str  — column name for y coordinate
-    cell_id_col    : str  — column name for cell ID
-    cell_type_col  : str  — column name for cell type
-    sample_id_col  : str  — column name for sample/image ID
-    save_path      : str  — root directory for outputs
-    test           : bool — if True, saves under <save_path>/test/; else under <save_path>/train/
+    high_response : dict — output of get_high_response_cells, keyed by cluster_id
+    x, y          : np.ndarray — spatial coordinates
+    cell_id       : np.ndarray — unique cell identifiers
+    cell_type     : np.ndarray — cell type labels
+    sample_id     : np.ndarray — sample/image identifiers
+    save_path     : str        — root directory for outputs
+    test          : bool       — save under /test or /train subdirectory
     """
-    if test:
-        save_path = f"{save_path}/test"
-        os.makedirs(save_path, exist_ok=True)
-    else:
-        save_path = f"{save_path}/train"
-        os.makedirs(save_path, exist_ok=True)
 
+    save_path = os.path.join(save_path, "test" if test else "train")
+    os.makedirs(save_path, exist_ok=True)
 
-    # Cell metadata
-    required_cols = {x_col, y_col, cell_id_col, cell_type_col, sample_id_col}
-    missing = required_cols - set(df.columns)
-    if missing:
-        raise ValueError(f"Missing columns in CSV: {missing}")
-    
-    # Filter dataframe by sample ids and rm the key
-    sample_ids = high_response["samples"]
-    del high_response["samples"]
-    df = df[df[sample_id_col].isin(sample_ids)].copy()
-    if df.empty:
-        raise ValueError("No rows left after filtering by test_sample_ids.")
+    # Filter by sample ids listed in high_response
+    valid_samples = list(high_response["samples"])
+    sample_mask = np.isin(sample_id, valid_samples)
+    x, y = x[sample_mask], y[sample_mask]
+    cell_id = cell_id[sample_mask]
+    cell_type = cell_type[sample_mask]
+    sample_id = sample_id[sample_mask]
 
-    # Iterate over cluster then samples
-    for cluster_id, res in high_response.items():
+    if cell_id.size == 0:
+        raise ValueError("No cells left after filtering by sample_ids.")
+
+    all_cell_types = np.unique(cell_type)
+
+    hr = {k: v for k, v in high_response.items() if k != "samples"}
+
+    for cluster_id, res in hr.items():
         high_ids = set(res["cell_ids"])
         filter_diff = res["filter_diff"]
 
         cluster_dir = os.path.join(save_path, f"cluster_{cluster_id}")
         os.makedirs(cluster_dir, exist_ok=True)
 
-        # Accumulate per-sample enrichment rows for a combined summary
         all_enrichment = []
 
-        for sample_id, sdf in df.groupby(sample_id_col):
+        for sid in np.unique(sample_id):
+            smask = sample_id == sid
 
-            sdf = sdf.copy()
-            sdf["_selected"] = sdf[cell_id_col].isin(high_ids)
+            sx, sy = x[smask], y[smask]
+            s_cell_id = cell_id[smask]
+            s_cell_type = cell_type[smask]
 
-            # Skip samples with no high-response cells
-            n_selected = sdf["_selected"].sum()
+            sel_mask = np.isin(s_cell_id, list(high_ids))
+            n_selected = sel_mask.sum()
+
             if n_selected == 0:
-                print(f"  [Cluster {cluster_id} | Sample {sample_id}] "
+                print(f"  [Cluster {cluster_id} | Sample {sid}] "
                       f"0 selected cells — skipping.")
                 continue
 
-            sel_cells = sdf[sdf["_selected"]]
-            bg_cells = sdf[~sdf["_selected"]]
-            n_total = len(sdf)
-            n_bg = len(bg_cells)
+            n_total = smask.sum()
+            n_bg    = n_total - n_selected
 
-            sample_dir = os.path.join(cluster_dir, f"sample_{sample_id}")
+            sample_dir = os.path.join(cluster_dir, f"sample_{sid}")
             os.makedirs(sample_dir, exist_ok=True)
 
-            # Create selected cells CSV per cluster
-            sel_cells.drop(columns=["_selected"]).to_csv(
-                os.path.join(sample_dir, "selected_cells.csv"), index=False
-            )
+            # --------------------------------------------------------
+            # a) Selected cells CSV
+            # --------------------------------------------------------
+            pd.DataFrame({
+                "x":         sx[sel_mask],
+                "y":         sy[sel_mask],
+                "cell_id":   s_cell_id[sel_mask],
+                "cell_type": s_cell_type[sel_mask],
+            }).to_csv(os.path.join(sample_dir, "selected_cells.csv"), index=False)
 
-            # Plot the cell filter response
+            # --------------------------------------------------------
+            # Spatial plot
+            # --------------------------------------------------------
             fig, ax = plt.subplots(figsize=(8, 7), dpi=150)
-            ax.scatter(bg_cells[x_col],  bg_cells[y_col],  c="#b0b0b0", s = 0.25)  # grey
-            ax.scatter(sel_cells[x_col], sel_cells[y_col], c="#8b0000", s = 0.25)  # dark red
+            ax.scatter(sx[~sel_mask], sy[~sel_mask], c="#b0b0b0", s=0.25)
+            ax.scatter(sx[sel_mask],  sy[sel_mask],  c="#8b0000", s=0.25)
             fig.savefig(os.path.join(sample_dir, "spatial_plot.png"))
             plt.close(fig)
 
-            # Celltype counts
-            ct_counts = (
-                sel_cells[cell_type_col]
-                .value_counts()
-                .rename_axis("cell_type")
-                .reset_index(name="count_selected")
-            )
-            ct_counts["prop_selected"] = ct_counts["count_selected"] / n_selected
+            # --------------------------------------------------------
+            # b) Cell type counts
+            # --------------------------------------------------------
+            sel_types          = s_cell_type[sel_mask]
+            unique_sel, counts = np.unique(sel_types, return_counts=True)
+            ct_counts = pd.DataFrame({
+                "cell_type":      unique_sel,
+                "count_selected": counts,
+                "prop_selected":  counts / n_selected,
+            }).sort_values("count_selected", ascending=False)
             ct_counts.to_csv(
                 os.path.join(sample_dir, "cell_type_counts.csv"), index=False
             )
 
-            # ------------------------------------------------------------
+            # --------------------------------------------------------
             # c) Enrichment score per cell type
-            #    score = log2( (prop_selected + pseudo) /
-            #                  (prop_background + pseudo) )
-            #    pseudo = 1 / (n_selected + n_bg) — one-cell pseudocount
-            # ------------------------------------------------------------
-            all_cell_types = df[cell_type_col].unique()
-            pseudo         = 1.0 / (n_selected + n_bg)
+            # --------------------------------------------------------
+            pseudo = 1.0 / (n_selected + n_bg)
+            bg_types = s_cell_type[~sel_mask]
 
             enrichment_rows = []
             for ct in all_cell_types:
-                count_sel = (sel_cells[cell_type_col] == ct).sum()
-                count_bg = (bg_cells[cell_type_col]  == ct).sum()
+                count_sel = (sel_types  == ct).sum()
+                count_bg  = (bg_types   == ct).sum()
 
-                prop_sel = count_sel / n_selected if n_selected > 0 else 0.0
-                prop_bg = count_bg  / n_bg       if n_bg       > 0 else 0.0
+                prop_sel  = count_sel / n_selected if n_selected > 0 else 0.0
+                prop_bg   = count_bg  / n_bg       if n_bg       > 0 else 0.0
 
-                log2_fc = np.log2(
-                    (prop_sel + pseudo) / (prop_bg + pseudo)
-                )
+                log2_fc   = np.log2((prop_sel + pseudo) / (prop_bg + pseudo))
 
                 enrichment_rows.append({
                     "cell_type":        ct,
                     "count_selected":   int(count_sel),
                     "count_background": int(count_bg),
-                    "prop_selected":    round(prop_sel,  6),
-                    "prop_background":  round(prop_bg,   6),
-                    "log2_enrichment":  round(log2_fc,   6),
-                    "sample_id": sample_id,
-                    "cluster_id": cluster_id,
-                    "filter_diff": round(filter_diff, 4)
+                    "prop_selected":    round(prop_sel, 6),
+                    "prop_background":  round(prop_bg,  6),
+                    "log2_enrichment":  round(log2_fc,  6),
+                    "sample_id":        sid,
+                    "cluster_id":       cluster_id,
+                    "filter_diff":      round(filter_diff, 4),
                 })
 
             enrich_df = (
@@ -521,15 +518,14 @@ def save_high_response_stats(
             enrich_df.to_csv(
                 os.path.join(sample_dir, "enrichment.csv"), index=False
             )
-
             all_enrichment.append(enrich_df)
 
-            print(f"  [Cluster {cluster_id} | Sample {sample_id}] "
+            print(f"  [Cluster {cluster_id} | Sample {sid}] "
                   f"{n_selected}/{n_total} cells selected — saved to {sample_dir}")
 
-        # ----------------------------------------------------------------
-        # 3. Save a cluster-level summary: mean enrichment across samples
-        # ----------------------------------------------------------------
+        # ------------------------------------------------------------
+        # Cluster-level enrichment summary
+        # ------------------------------------------------------------
         if all_enrichment:
             combined = pd.concat(all_enrichment, ignore_index=True)
             summary  = (
@@ -543,7 +539,7 @@ def save_high_response_stats(
                 .reset_index()
                 .sort_values("mean_log2_enrichment", ascending=False)
             )
-            summary["cluster_id"] = cluster_id
+            summary["cluster_id"]  = cluster_id
             summary["filter_diff"] = filter_diff
             summary.to_csv(
                 os.path.join(cluster_dir, "enrichment_summary.csv"), index=False
