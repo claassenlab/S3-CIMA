@@ -67,7 +67,7 @@ class CIMADataset(Dataset):
 
         # resolve label type
         self.task = task
-        print(self.task)
+        print(f"Selected task : {self.task}")
 
         # --- collect anchor indices per image, build KD-trees once --------
         self.samples = []
@@ -76,7 +76,6 @@ class CIMADataset(Dataset):
         if random_ctrl:
             ctrl_label = len(set(self.label))
             encoded_ctrl = self._encode_label(ctrl_label)
-            print(encoded_ctrl)
 
 
         for img_id in np.unique(image):
