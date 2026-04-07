@@ -28,6 +28,7 @@ def run_s3cima(
     maxpool_percentages : list = [0.01, 1, 5, 20, 100],
     nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
     filter_threshold: float = 0.9,
+    bg_sets: int = 500,
     batch_size = 256,
     lr: float = 0.1,
     epochs: int = 20, 
@@ -63,6 +64,8 @@ def run_s3cima(
         label = label,
         random_ctrl = random_ctrl,
         task = task,
+        bg_sets=bg_sets,
+        seed = seed,
     )
 
     # Fit the CIMA model from this dataset
