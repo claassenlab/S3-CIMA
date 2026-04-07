@@ -56,7 +56,7 @@ def plot_filter_weights(
     df = df[gene_order]
 
     # Heatmap
-    z        = df.values                          # (n_clusters, n_genes)
+    z = df.values                          # (n_clusters, n_genes)
     x_labels = df.columns.tolist()                # gene names
     y_labels = df.index.tolist()                  # cluster labels
 
@@ -64,23 +64,23 @@ def plot_filter_weights(
     abs_max = np.abs(z).max()
 
     fig = go.Figure(go.Heatmap(
-        z           = z,
-        x           = x_labels,
-        y           = y_labels,
+        z = z,
+        x = x_labels,
+        y = y_labels,
         colorscale  = "RdBu_r",
-        zmid        = 0,
-        zmin        = -abs_max,
-        zmax        =  abs_max,
-        colorbar    = dict(title="Weight"),
+        zmid = 0,
+        zmin = -abs_max,
+        zmax =  abs_max,
+        colorbar = dict(title="Weight"),
         hoverongaps = False,
         hovertemplate = "Gene: %{x}<br>Cluster: %{y}<br>Weight: %{z:.4f}<extra></extra>",
     ))
 
-    n_genes    = len(x_labels)
+    n_genes = len(x_labels)
     n_clusters = len(y_labels)
 
     fig.update_layout(
-        title       = dict(
+        title = dict(
             text = (
                 f"Filter Cluster Gene Weights "
                 f"({n_clusters} clusters, {n_genes} genes)"
@@ -88,18 +88,18 @@ def plot_filter_weights(
                 f"Red = positive weight (activating) · Blue = negative (suppressing)"
                 f"</span>"
             ),
-            x    = 0.5,
+            x = 0.5,
             xanchor = "center",
         ),
         xaxis = dict(
-            title_text   = "Gene / Marker",
-            tickangle    = -45,
-            tickfont     = dict(size=max(8, min(12, int(400 / max(n_genes, 1))))),
+            title_text = "Gene / Marker",
+            tickangle = -45,
+            tickfont = dict(size=max(8, min(12, int(400 / max(n_genes, 1))))),
         ),
         yaxis = dict(
-            title_text   = "Filter Cluster",
-            autorange    = "reversed",   # cluster 0 at top
-            tickfont     = dict(size=11),
+            title_text = "Filter Cluster",
+            autorange = "reversed",   # cluster 0 at top
+            tickfont = dict(size=11),
         ),
         height = max(300, 120 * n_clusters),
     )
@@ -114,7 +114,7 @@ def plot_filter_weights(
     if show:
         fig.show()
 
-    return fig
+    return figure_path
 
 
 def get_high_response_cells_test(
