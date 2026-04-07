@@ -48,15 +48,14 @@ class CellCNN(nn.Module):
             kernel_size  = 1,
             bias = True,
         )
-        nn.init.uniform_(self.conv.weight)
-        nn.init.uniform_(self.conv.bias)
+        # Different than original CellCNN - kaiming more standard
+        nn.init.kaiming_normal_(self.conv.weight, mode='fan_in', 
+                                nonlinearity='relu')
 
         self.dropout = nn.Dropout(p=dropout_p) if dropout else None
 
         out_units = 1 if regression else n_classes
         self.fc = nn.Linear(nfilter, out_units)
-        nn.init.uniform_(self.fc.weight)
-        nn.init.uniform_(self.fc.bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
