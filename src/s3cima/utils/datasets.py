@@ -53,6 +53,7 @@ class CIMADataset(Dataset):
         random_ctrl: bool = False,
         task: str = "classification",
         seed: int = 12345,
+        bg_sets: int = 500,
     ):
         # Task input check
         assert task in ("classification", "regression"), \
@@ -62,8 +63,14 @@ class CIMADataset(Dataset):
         self.K = K
         self.ncell = ncell
         self.label = label
+        self.bg_sets = bg_sets
+        
         self.random_ctrl = random_ctrl
         self.rng = np.random.default_rng(seed)
+
+        if anchor == "BG":
+            random_ctrl = False # Overrides for BG
+        self.random_ctrl = random_ctrl
 
         # resolve label type
         self.task = task
@@ -93,7 +100,13 @@ class CIMADataset(Dataset):
             coords = np.stack([img_x, img_y], axis=1)
             tree   = cKDTree(coords)
 
-            anchor_idx = np.where(img_ct == anchor)[0]
+            if anchor == "BG":
+                anchor_idx = self.rng.choice(len(img_ct), 
+                                             size=min(self.bg_sets, len(img_ct)), 
+                                             replace=False)
+            else:
+                anchor_idx = np.where(img_ct == anchor)[0]
+
             all_idx    = np.arange(len(img_ct))
             non_anchor = np.delete(all_idx, anchor_idx)
             ctrl_idx   = self.rng.choice(
