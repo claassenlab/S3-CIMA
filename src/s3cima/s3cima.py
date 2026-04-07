@@ -11,6 +11,7 @@ import pandas as pd
 
 from s3cima.utils.datasets import CIMADataset
 from s3cima.utils.model import fit, set_seed
+import s3cima.utils.plot as s3cima_plot 
 
 # Function ---------------------------------------------------------------
 
@@ -26,6 +27,8 @@ def run_s3cima(
     n_val_folds: int = 3,              
     maxpool_percentages : list = [0.01, 1, 5, 20, 100],
     nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
+    filter_threshold: float = 0.9,
+    bg_sets: int = 500,
     batch_size = 256,
     lr: float = 0.1,
     epochs: int = 20, 
@@ -61,10 +64,12 @@ def run_s3cima(
         label = label,
         random_ctrl = random_ctrl,
         task = task,
+        bg_sets=bg_sets,
+        seed = seed,
     )
 
     # Fit the CIMA model from this dataset
-    preds, loss, val_loss, ba, val_ba, test_samples = fit(dataset,
+    results, loss, val_loss, ba, val_ba, test_samples, train_folds, res_save_path = fit(dataset,
         anchor = anchor,
         K = K,
         ncell = ncell,
@@ -84,4 +89,30 @@ def run_s3cima(
         save_loc = save_path,
         seed=seed)
     
-    # Plot TODO
+    # Calculate cell filter response - results is the final metadata dict
+    fig_save_path = s3cima_plot.plot_filter_weights(results,
+                                    show=False, 
+                                    save_path=res_save_path)   
+    res_test = s3cima_plot.get_high_response_cells_test(results, 
+                                            test_samples, 
+                                            genes, 
+                                            filter_threshold=filter_threshold)
+    res_train = s3cima_plot.get_high_response_cells_train(results, 
+                                              train_folds, 
+                                              genes, 
+                                              filter_threshold=filter_threshold)
+    
+    # Calculate enrichment and plots
+    test_fig_save_path = s3cima_plot.save_high_response_stats(res_test,
+                                    x, y, cell_id, cell_type, sample_id,
+                                    save_path = fig_save_path,
+                                    test = True)
+    train_fig_save_path = s3cima_plot.save_high_response_stats(res_train,
+                                    x, y, cell_id, cell_type, sample_id,
+                                    save_path = fig_save_path,
+                                    test = False)
+    
+
+    s3cima_plot.enrichment_summary(test_fig_save_path)
+    s3cima_plot.enrichment_summary(train_fig_save_path)
+

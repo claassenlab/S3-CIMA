@@ -52,7 +52,8 @@ class CIMADataset(Dataset):
         ncell : int,
         random_ctrl: bool = False,
         task: str = "classification",
-        seed: int = 12345,
+        seed: int = 420,
+        bg_sets: int = 500,
     ):
         # Task input check
         assert task in ("classification", "regression"), \
@@ -62,12 +63,18 @@ class CIMADataset(Dataset):
         self.K = K
         self.ncell = ncell
         self.label = label
+        self.bg_sets = bg_sets
+        
         self.random_ctrl = random_ctrl
         self.rng = np.random.default_rng(seed)
 
+        if anchor == "BG":
+            random_ctrl = False # Overrides for BG
+        self.random_ctrl = random_ctrl
+
         # resolve label type
         self.task = task
-        print(self.task)
+        print(f"Selected task : {self.task}")
 
         # --- collect anchor indices per image, build KD-trees once --------
         self.samples = []
@@ -76,30 +83,30 @@ class CIMADataset(Dataset):
         if random_ctrl:
             ctrl_label = len(set(self.label))
             encoded_ctrl = self._encode_label(ctrl_label)
-            print(encoded_ctrl)
 
 
         for img_id in np.unique(image):
             mask = image == img_id
             ix   = np.where(mask)[0]
 
-            img_x      = x[ix]
-            img_y      = y[ix]
-            img_int    = intensity[ix]
-            img_ct     = ct[ix]
+            img_x = x[ix]
+            img_y = y[ix]
+            img_int = intensity[ix]
+            img_ct = ct[ix]
             img_cellid = cellid[ix]
-            img_pat    = np.unique(pat[ix])[0]
+            img_pat = np.unique(pat[ix])[0]
             img_labels = label[ix]
 
             coords = np.stack([img_x, img_y], axis=1)
             tree   = cKDTree(coords)
 
-            anchor_idx = np.where(img_ct == anchor)[0]
-            all_idx    = np.arange(len(img_ct))
-            non_anchor = np.delete(all_idx, anchor_idx)
-            ctrl_idx   = self.rng.choice(
-                non_anchor, size=len(anchor_idx), replace=False
-            )
+            if anchor == "BG":
+                anchor_idx = self.rng.choice(len(img_ct), 
+                                             size=min(self.bg_sets, len(img_ct)), 
+                                             replace=False)
+            else:
+                anchor_idx = np.where(img_ct == anchor)[0]
+
             # Selecting the actual anchor cells
             for idx in anchor_idx:
                 knn_int, knn_ids = self._query(idx, tree, img_int, img_cellid)
@@ -113,6 +120,13 @@ class CIMADataset(Dataset):
                 })
             # Background control cells (aka non-anchor cells)
             if random_ctrl:
+
+                all_idx    = np.arange(len(img_ct))
+                non_anchor = np.delete(all_idx, anchor_idx)
+                ctrl_idx   = self.rng.choice(
+                    non_anchor, size=len(anchor_idx), replace=False
+                )   
+
                 for idx in ctrl_idx:
                     knn_int, knn_ids = self._query(idx, tree, img_int, img_cellid)
                     self.samples.append({

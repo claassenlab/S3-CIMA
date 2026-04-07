@@ -1,6 +1,6 @@
 [project]
 name = "s3cima"
-version = "0.1.7"
+version = "0.1.10"
 description = "Supervised Spatial Single-Cell Image Analysis for identification of disease associated cell type composition in the tissue microenvironment"
 authors = [
     {name = "gabriel-dvl",email = "gduvalkieffer@gmail.com"}
@@ -15,13 +15,13 @@ dependencies = [
     "scipy",
     "matplotlib",
     "plotly",
+    "nbformat (>=4.2.0)",
     "tqdm",
-    "torch",
-    "pytest"
+    "torch"
 ]
 
 [tool.poetry]
-version = "0.1.7"
+version = "0.1.10"
 
 [tool.poetry.dependencies]
 python = ">=3.10"

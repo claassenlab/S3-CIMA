@@ -674,7 +674,7 @@ def fit(dataset: CIMADataset,               # CIMA Args
         K: int,
         ncell: int,
         genes: list,
-        save_loc,
+        save_loc: str,
         nruns: int = 5, 
         dendrogram_cutoff: float = 0.4,
         n_val_folds: int = 3,              
@@ -939,7 +939,7 @@ Discriminative filters found
 A total of {len(filter_results['meta'])} filter clusters identified. 
 --------------------------------------------------------------------
 
-Running the models producing the top 3 most discriminative filters on test to 
+Running the models producing the top discriminative filters on test to 
 report classification: 
 """)
                 
@@ -947,13 +947,9 @@ report classification:
     # 3. Validate on the test
     # ----------------------------------------------------------------
 
-    # Now using these results, we can test the top3 most discriminative filters on test
+    # Now using these results, we can test the top filters on test
     # and report classification.
-    sorted_meta = sorted(
-        filter_results["meta"],
-        key=lambda m: m["filter_diff"],
-        reverse=True
-    )
+    filtered_meta = [m for m in filter_results["meta"] if m["discriminative"]]
 
     t_loader = DataLoader(
         test_subset, batch_size=batch_size, shuffle=False, num_workers=num_workers
@@ -961,8 +957,8 @@ report classification:
 
     final_results = []
     counter = 0
-    for r in sorted_meta:
-
+    for r in filtered_meta:
+        
         run_of_origin = r["source_run"]
 
         ckpt_path = f"{save_model}/best_model_run{run_of_origin}.pth"
@@ -973,13 +969,13 @@ report classification:
         params = torch.load(ckpt_path, map_location=device, weights_only=False)
 
         model = CellCNN(
-            nmark        = params["nmarkers"],
-            nfilter      = params["nfilter"],
-            k            = params["k"],
-            n_classes    = params["n_classes"],
-            dropout      = params["dropout"],
-            dropout_p    = params["dropout_p"],
-            regression   = params["regression"],
+            nmark = params["nmarkers"],
+            nfilter = params["nfilter"],
+            k = params["k"],
+            n_classes = params["n_classes"],
+            dropout = params["dropout"],
+            dropout_p = params["dropout_p"],
+            regression = params["regression"],
             selection_type = params["selection_type"],
         )
         model.load_state_dict(params["model_state_dict"])
@@ -1006,11 +1002,11 @@ report classification:
 
     if len(final_results) == 0:
         print(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
-        print(f"Returning all filters")
+        print(f"Returning all discriminative filters")
 
         with open(log_file, "a") as log:
             log.write(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
 
-        final_results = sorted_meta
+        final_results = filtered_meta
 
-    return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset
+    return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds, result_folder
