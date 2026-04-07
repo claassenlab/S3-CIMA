@@ -66,7 +66,7 @@ def run_s3cima(
     )
 
     # Fit the CIMA model from this dataset
-    results, loss, val_loss, ba, val_ba, test_samples, validation_folds = fit(dataset,
+    results, loss, val_loss, ba, val_ba, test_samples, train_folds, res_save_path = fit(dataset,
         anchor = anchor,
         K = K,
         ncell = ncell,
@@ -86,16 +86,30 @@ def run_s3cima(
         save_loc = save_path,
         seed=seed)
     
-    # Calculate cell filter response and plot
-    s3cima_plot.plot_filter_weights(results["meta"],
+    # Calculate cell filter response - results is the final metadata dict
+    fig_save_path = s3cima_plot.plot_filter_weights(results,
                                     show=False, 
-                                    save_path=save_path)   
-    res_test = s3cima_plot.get_high_response_cells_test(results["meta"], 
+                                    save_path=res_save_path)   
+    res_test = s3cima_plot.get_high_response_cells_test(results, 
                                             test_samples, 
                                             genes, 
                                             filter_threshold=filter_threshold)
-    res_train = s3cima_plot.get_high_response_cells_train(results["meta"], 
-                                              validation_folds, 
+    res_train = s3cima_plot.get_high_response_cells_train(results, 
+                                              train_folds, 
                                               genes, 
                                               filter_threshold=filter_threshold)
+    
+    # Calculate enrichment and plots
+    test_fig_save_path = s3cima_plot.save_high_response_stats(res_test,
+                                    x, y, cell_id, cell_type, sample_id,
+                                    save_path = fig_save_path,
+                                    test = True)
+    train_fig_save_path = s3cima_plot.save_high_response_stats(res_train,
+                                    x, y, cell_id, cell_type, sample_id,
+                                    save_path = fig_save_path,
+                                    test = False)
+    
+
+    s3cima_plot.enrichment_summary(test_fig_save_path)
+    s3cima_plot.enrichment_summary(train_fig_save_path)
 
