@@ -680,6 +680,9 @@ def fit(dataset: CIMADataset,               # CIMA Args
         n_val_folds: int = 3,              
         maxpool_percentages : list = [0.01, 1, 5, 20, 100],
         nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
+        dropout: bool = True,
+        dropout_p: float = 0.5,
+        l2: float = 1e-4,
         background: bool = False,
         batch_size = 256,
         lr: float = 0.01,
@@ -774,9 +777,7 @@ Number of classes - {n_classes}
         k = max(1, int(mp / 100. * ncell))
         print('Cells pooled: %d' % k)
 
-        # Set mode + optimiser - TODO dont hardcode this
-        dropout = True 
-        dropout_p = 0.4 
+        # Set mode + optimiser
         if classification:
             regression = False
         else:
@@ -812,7 +813,8 @@ Optimiser - Adam
                         )
             model = model.to(device)
             optimizer = optim.Adam(model.parameters(), 
-                            lr=lr ,amsgrad = False) 
+                            lr=lr,amsgrad = False, 
+                            weigth_decay=l2) 
 
             # Early stopping object
             if early_stopping:
