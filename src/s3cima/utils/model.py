@@ -678,7 +678,7 @@ def fit(dataset: CIMADataset,               # CIMA Args
         nruns: int = 5, 
         dendrogram_cutoff: float = 0.4,
         n_val_folds: int = 3,              
-        maxpool_percentages : list = [0.01, 1, 5, 20, 100],
+        maxpool_percentages : list = [1, 5, 10, 20, 50, 100],
         nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
         dropout: bool = True,
         dropout_p: float = 0.5,
