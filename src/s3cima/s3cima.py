@@ -28,9 +28,12 @@ def run_s3cima(
     maxpool_percentages : list = [0.01, 1, 5, 20, 100],
     nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
     filter_threshold: float = 0.9,
+    dropout: bool = True,
+    dropout_p: float = 0.5,
     bg_sets: int = 500,
     batch_size = 256,
     lr: float = 0.1,
+    l2: float = 1e-4,
     epochs: int = 20, 
     num_workers: int = 0,
     early_stopping = True,
@@ -83,6 +86,9 @@ def run_s3cima(
         dendrogram_cutoff = dendrogram_cutoff,
         maxpool_percentages = maxpool_percentages,
         nfilter_selection = nfilter_selection,
+        dropout = dropout,
+        dropout_p = dropout_p,
+        l2 = l2,
         early_stopping = early_stopping,
         patience = patience,
         num_workers = num_workers,
@@ -113,6 +119,8 @@ def run_s3cima(
                                     test = False)
     
 
-    s3cima_plot.enrichment_summary(test_fig_save_path)
-    s3cima_plot.enrichment_summary(train_fig_save_path)
+    s3cima_plot.enrichment_summary(test_fig_save_path,
+                                   test=True)
+    s3cima_plot.enrichment_summary(train_fig_save_path,
+                                   test=False)
 

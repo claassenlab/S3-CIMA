@@ -550,7 +550,9 @@ def save_high_response_stats(
     return save_path
             
 
-def enrichment_summary(save_path: str, output_file: str = None) -> str:
+def enrichment_summary(save_path: str, 
+                       test: bool = True,
+                       output_file: str = None) -> str:
     """
     Scans *save_path* for all enrichment_summary.csv files produced by
     save_high_response_stats and saves a single interactive Plotly HTML
@@ -566,8 +568,13 @@ def enrichment_summary(save_path: str, output_file: str = None) -> str:
     -------
     str — absolute path to the written HTML file
     """
+    if test:
+        prefix = "test"
+    else:
+        prefix = "train"
+
     if output_file is None:
-        output_file = os.path.join(save_path, "enrichment_summary_report.html")
+        output_file = os.path.join(save_path, f"enrichment_summary_report_{prefix}.html")
 
     # Find enrichment files
     csv_files = sorted(
@@ -650,7 +657,7 @@ def enrichment_summary(save_path: str, output_file: str = None) -> str:
 
     fig.update_layout(
         height=max(300, 380 * nrows),
-        title_text="Filter Cluster Enrichment Summary on test samples",
+        title_text=f"Filter Cluster Enrichment Summary on {prefix} samples",
         title_font_size=16,
         paper_bgcolor="#f7f6f2",
         plot_bgcolor="#ffffff",

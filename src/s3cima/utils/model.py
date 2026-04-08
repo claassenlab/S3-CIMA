@@ -111,7 +111,7 @@ def _compute_filter_diff(consensus_conv, consensus_out, consensus_biases,
     """
     Returns filter_diff array of shape (n_consensus_filters,).
     """
-    y_true      = np.array(valid_phenotypes)
+    y_true = np.array(valid_phenotypes)
     filter_diff = np.zeros(len(consensus_conv))
 
     for i, (conv_w, out_w, bias) in enumerate(
@@ -256,7 +256,7 @@ def get_discriminative_filters(
     # ----------------------------------------------------------------
     # 3. Pool filter weight vectors from passing runs
     #    Keep only filters whose dominant output connection is NOT
-    #    the control class (last class index = n_classes - 1)
+    #    the control class
     # ----------------------------------------------------------------
     ctrl_class = n_classes - 1 if has_background else None
 
@@ -281,10 +281,12 @@ def get_discriminative_filters(
 
     if len(pooled_conv) == 0:
         print("[WARN] No non-control filters found across passing runs.")
+        with open(log_file, "a") as log:
+            log.write(f"[WARN] No non-control filters found across passing runs.\n")
         return None
 
-    pooled_conv = np.array(pooled_conv)   # (N_filters, nmark)
-    pooled_out  = np.array(pooled_out)    # (N_filters, n_classes)
+    pooled_conv = np.array(pooled_conv)
+    pooled_out  = np.array(pooled_out) 
 
     print(f"[INFO] Total non-control filters pooled: {pooled_conv.shape[0]}")
 
@@ -320,16 +322,16 @@ def get_discriminative_filters(
         if len(member_idx) == 1:
             medoid_local = 0
         else:
-            dist_mat     = cdist(members, members, metric="cosine")
+            dist_mat = cdist(members, members, metric="cosine")
             medoid_local = np.argmin(dist_mat.mean(axis=1))
 
         medoid_global = member_idx[medoid_local]
-        medoid_weights   = pooled_conv[medoid_global]    # (nmark,)
+        medoid_weights = pooled_conv[medoid_global]    # (nmark,)
 
         # Rank genes by absolute filter weight (descending)
-        ranked_idx    = np.argsort(np.abs(medoid_weights))[::-1]
+        ranked_idx = np.argsort(np.abs(medoid_weights))[::-1]
         ranked_weights = medoid_weights[ranked_idx].tolist()
-        ranked_genes   = (
+        ranked_genes = (
             [genes[i] for i in ranked_idx] if genes is not None
             else [f"marker_{i}" for i in ranked_idx]
         )
@@ -678,8 +680,11 @@ def fit(dataset: CIMADataset,               # CIMA Args
         nruns: int = 5, 
         dendrogram_cutoff: float = 0.4,
         n_val_folds: int = 3,              
-        maxpool_percentages : list = [0.01, 1, 5, 20, 100],
+        maxpool_percentages : list = [1, 5, 10, 20, 50, 100],
         nfilter_selection: list = [3, 4, 5, 6, 7, 8, 9, 10],
+        dropout: bool = True,
+        dropout_p: float = 0.5,
+        l2: float = 1e-4,
         background: bool = False,
         batch_size = 256,
         lr: float = 0.01,
@@ -765,7 +770,6 @@ Number of classes - {n_classes}
 
         # Reset to calculate best model
         max_ba = 0
-        max_f1 = 0
 
         # First select the parameters for this run
         nfilters = np.random.choice(nfilter_selection)
@@ -774,9 +778,7 @@ Number of classes - {n_classes}
         k = max(1, int(mp / 100. * ncell))
         print('Cells pooled: %d' % k)
 
-        # Set mode + optimiser - TODO dont hardcode this
-        dropout = True 
-        dropout_p = 0.4 
+        # Set mode + optimiser
         if classification:
             regression = False
         else:
@@ -812,7 +814,8 @@ Optimiser - Adam
                         )
             model = model.to(device)
             optimizer = optim.Adam(model.parameters(), 
-                            lr=lr ,amsgrad = False) 
+                            lr=lr,amsgrad = False, 
+                            weight_decay=l2) 
 
             # Early stopping object
             if early_stopping:
@@ -852,9 +855,8 @@ Fold number {count} - {len(train_data)} train samples, {len(val_data)} validatio
                         break
 
                 # After epoch save best model weights
-                if val_ba > max_ba and val_f1 > max_f1:
+                if val_ba > max_ba:
                     max_ba = train_ba
-                    max_f1 = val_f1
 
                     # From this best model 
                     checkpoint = {
