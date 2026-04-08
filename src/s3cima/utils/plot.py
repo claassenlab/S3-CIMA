@@ -604,13 +604,16 @@ def enrichment_summary(save_path: str,
 
     # Figure panel
     n = len(clusters)
-    ncols = int(min(3, n))
+    if n == 4:
+        ncols = 2
+    else:
+        ncols = int(min(3, n))
     nrows = int(np.ceil(n / ncols))
     fig = make_subplots(
     rows=nrows, cols=ncols,
     subplot_titles=[f"Consensus filter {cid} (diff: {fil})" for cid, fil, _ in clusters],
     vertical_spacing= 0.3 / max(nrows, 1),
-    horizontal_spacing= 0.2 / max(ncols, 1),
+    horizontal_spacing= 0.25 / max(ncols, 1),
     ) 
 
     for i, (cluster_id, filter_val, df) in enumerate(clusters):
