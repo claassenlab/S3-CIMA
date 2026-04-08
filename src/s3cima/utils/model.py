@@ -856,7 +856,7 @@ Fold number {count} - {len(train_data)} train samples, {len(val_data)} validatio
                         break
 
                 # After epoch save best model weights
-                if val_ba > max_ba and val_f1 > max_f1:
+                if val_ba > max_ba:
                     max_ba = train_ba
                     max_f1 = val_f1
 
