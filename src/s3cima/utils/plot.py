@@ -19,7 +19,7 @@ import plotly.io as pio
 def plot_filter_weights(
     meta: list,
     save_path: str = ".",
-    filename: str = "filter_cluster_weights",
+    filename: str = "consensus_filter_weights",
     show: bool = True,
     top_n_genes: int = None,
 ):
