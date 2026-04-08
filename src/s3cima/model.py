@@ -43,9 +43,9 @@ class CellCNN(nn.Module):
         self.selection_type = selection_type
 
         self.conv = nn.Conv1d(
-            in_channels  = nmark,
+            in_channels = nmark,
             out_channels = nfilter,
-            kernel_size  = 1,
+            kernel_size = 1,
             bias = True,
         )
         # Different than original CellCNN - kaiming more standard
@@ -90,10 +90,10 @@ def select_top_pool(x: torch.Tensor, k: int, selection_type: str = "mean") -> to
     (B, nfilter) pooled representation
     """
     # topk over the cell dimension (dim=2)
-    topk_vals, _ = torch.topk(x, k=k, dim=2)   # (B, nfilter, k)
+    topk_vals, _ = torch.topk(x, k=k, dim=2) 
     if selection_type == "mean":
-        return topk_vals.mean(dim=2)             # (B, nfilter)
+        return topk_vals.mean(dim=2)
     elif selection_type == "max":
-        return topk_vals[:, :, 0]               # (B, nfilter)
+        return topk_vals[:, :, 0]
     else:
         raise ValueError(f"selection_type must be 'mean' or 'max', got '{selection_type}'")
