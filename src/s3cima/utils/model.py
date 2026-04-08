@@ -167,7 +167,6 @@ def get_discriminative_filters(
     if not classification:
         raise Exception("Regression not implemented yet")
 
-
     # Validate genes if provided
     if genes is not None:
         genes = list(genes)
@@ -177,7 +176,6 @@ def get_discriminative_filters(
             )
         
     # Get the sample information from the validation dataset
-
     t_loader = DataLoader(
         validation_subset, batch_size=batch_size, shuffle=False, num_workers=num_workers
     )
@@ -719,7 +717,7 @@ def fit(dataset: CIMADataset,               # CIMA Args
     current_time = now.strftime("%H_%M_%S")
     current_day = today.strftime("%d_%m_%Y")
 
-    result_folder = f"{save_loc}/results_Anchor{anchor}_K{K}"
+    result_folder = f"{save_loc}/results_Anchor{anchor}_K{K}_{current_day}_{current_time}"
     os.makedirs(result_folder, exist_ok=True)
          
     # Generate the datasets and set classes
@@ -1002,7 +1000,7 @@ report classification:
                       f"Test balanced accuracy: {ba:.2f}, Test Macro F1 Score: {f1:.2f}\n")
             log.write(f'Found {counter} discriminative filters with test balanced accuracy above {accur_thres:.2f}\n')
 
-    if len(final_results) == 0:
+    if counter == 0:
         print(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
         print(f"Returning all discriminative filters")
 
@@ -1010,10 +1008,10 @@ report classification:
             log.write(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
 
         final_results = filtered_meta
-        
+
     # Else return the top n or 5 filters with highest test ba
     else:
-        if len(final_results) > 5:
+        if counter > 5:
             final_results = sorted(final_results, key=lambda x: x["test_ba"], reverse=True)[:5]
             with open(log_file, "a") as log:
                 log.write(f"[INFO] Top 5 discriminative filters saved.")
