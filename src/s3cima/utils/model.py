@@ -1012,7 +1012,7 @@ report classification:
     # Else return the top n or 4 filters with highest test ba
     else:
         if counter > 4:
-            final_results = sorted(final_results, key=lambda x: x["test_ba"], reverse=True)[:5]
+            final_results = sorted(final_results, key=lambda x: x["test_ba"], reverse=True)[:4]
             with open(log_file, "a") as log:
                 log.write(f"[INFO] Top 4 discriminative filters saved.")
         else:
