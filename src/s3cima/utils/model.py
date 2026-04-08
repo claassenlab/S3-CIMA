@@ -1010,5 +1010,15 @@ report classification:
             log.write(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
 
         final_results = filtered_meta
+        
+    # Else return the top n or 5 filters with highest test ba
+    else:
+        if len(final_results) > 5:
+            final_results = sorted(final_results, key=lambda x: x["test_ba"], reverse=True)[:5]
+            with open(log_file, "a") as log:
+                log.write(f"[INFO] Top 5 discriminative filters saved.")
+        else:
+            with open(log_file, "a") as log:
+                log.write(f"[INFO] Top {len(final_results)} discriminative filters saved.")
 
     return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds, result_folder
