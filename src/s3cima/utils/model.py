@@ -770,7 +770,6 @@ Number of classes - {n_classes}
 
         # Reset to calculate best model
         max_ba = 0
-        max_f1 = 0
 
         # First select the parameters for this run
         nfilters = np.random.choice(nfilter_selection)
@@ -858,7 +857,6 @@ Fold number {count} - {len(train_data)} train samples, {len(val_data)} validatio
                 # After epoch save best model weights
                 if val_ba > max_ba:
                     max_ba = train_ba
-                    max_f1 = val_f1
 
                     # From this best model 
                     checkpoint = {
