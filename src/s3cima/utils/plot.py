@@ -424,7 +424,7 @@ def save_high_response_stats(
         high_ids = set(res["cell_ids"])
         filter_diff = res["filter_diff"]
 
-        cluster_dir = os.path.join(save_path, f"cluster_{cluster_id}")
+        cluster_dir = os.path.join(save_path, f"filter_{cluster_id}")
         os.makedirs(cluster_dir, exist_ok=True)
 
         all_enrichment = []
@@ -440,7 +440,7 @@ def save_high_response_stats(
             n_selected = sel_mask.sum()
 
             if n_selected == 0:
-                print(f"  [Cluster {cluster_id} | Sample {sid}] "
+                print(f"  [Filter {cluster_id} | Sample {sid}] "
                       f"0 selected cells — skipping.")
                 continue
 
@@ -578,7 +578,7 @@ def enrichment_summary(save_path: str,
 
     # Find enrichment files
     csv_files = sorted(
-        glob.glob(os.path.join(save_path, "cluster_*", "enrichment_summary.csv"))
+        glob.glob(os.path.join(save_path, "filter_*", "enrichment_summary.csv"))
     )
     if not csv_files:
         raise FileNotFoundError(
@@ -657,7 +657,7 @@ def enrichment_summary(save_path: str,
 
     fig.update_layout(
         height=max(300, 380 * nrows),
-        title_text=f"Filter Cluster Enrichment Summary on {prefix} samples",
+        title_text=f"Consensus Filter Enrichment Summary on {prefix} samples",
         title_font_size=16,
         paper_bgcolor="#f7f6f2",
         plot_bgcolor="#ffffff",
