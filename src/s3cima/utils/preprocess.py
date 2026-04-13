@@ -211,7 +211,7 @@ def process_csv(
     condition = meta[condition_col].values.astype(str)
     encoder = LabelEncoder()
     integer_labels = encoder.fit_transform(condition)
-    mapping = dict(zip(encoder.classes_, range(len(encoder.classes_))))
+    mapping = dict(zip(range(len(encoder.classes_)), encoder.classes_))
 
     print(f"[INFO] Final output: {intensity.shape[0]} cells × "
           f"{intensity.shape[1]} markers.")

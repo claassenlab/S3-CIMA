@@ -109,18 +109,18 @@ def run_s3cima(
                                               filter_threshold=filter_threshold)
     
     # Calculate enrichment and plots
-    test_fig_save_path = s3cima_plot.save_high_response_stats(res_test,
-                                    x, y, cell_id, cell_type, sample_id,
+    test_fig_save_path = s3cima_plot.save_stats(res_test,
+                                    x, y, cell_id, cell_type, sample_id, label, label_map,
                                     save_path = fig_save_path,
                                     test = True)
-    train_fig_save_path = s3cima_plot.save_high_response_stats(res_train,
-                                    x, y, cell_id, cell_type, sample_id,
+    train_fig_save_path = s3cima_plot.save_stats(res_train,
+                                    x, y, cell_id, cell_type, sample_id, label, label_map,
                                     save_path = fig_save_path,
                                     test = False)
     
 
-    s3cima_plot.enrichment_summary(test_fig_save_path,
-                                   test=True)
-    s3cima_plot.enrichment_summary(train_fig_save_path,
-                                   test=False)
+    # s3cima_plot.enrichment_summary(test_fig_save_path,
+    #                                test=True)
+    # s3cima_plot.enrichment_summary(train_fig_save_path,
+    #                                test=False)
 

@@ -371,7 +371,150 @@ def get_high_response_cells_train(
     # ALso save sample info
     results["samples"] = set(anchor_samples)
     return results
+        
 
+def save_stats(
+    high_response: dict,
+    x: np.ndarray,
+    y: np.ndarray,
+    cell_id: np.ndarray,
+    cell_type: np.ndarray,
+    sample_id: np.ndarray,
+    condition_id: np.ndarray,
+    label_map: dict,
+    save_path: str = ".",
+    test: bool = True,
+):
+    """
+    For each consensus filter cluster:
+      - Per sample : spatial .png named by sample ID
+      - Per filter : all_selected_cells.csv — x, y, cell_id, cell_type,
+                     sample_id, label, cluster_id, filter_diff
+                     for every high-response cell across all samples
+
+    Parameters
+    ----------
+    high_response : dict — output of get_high_response_cells, keyed by cluster_id.
+                    Must also contain a "samples" key listing valid sample IDs.
+    x, y          : np.ndarray — spatial coordinates
+    cell_id       : np.ndarray — unique cell identifiers
+    cell_type     : np.ndarray — cell type labels
+    sample_id     : np.ndarray — sample/image identifiers
+    condition_id  : np.ndarray - condition id
+    label_map     : dict       - map back from int to string label
+    save_path     : str        — root directory for outputs
+    test          : bool       — save under /test or /train subdirectory
+    """
+
+    save_path = os.path.join(save_path, "test" if test else "train")
+    os.makedirs(save_path, exist_ok=True)
+
+    valid_samples = list(high_response["samples"])
+    sample_mask   = np.isin(sample_id, valid_samples)
+
+    x = x[sample_mask]
+    y = y[sample_mask]
+    cell_id = cell_id[sample_mask]
+    cell_type = cell_type[sample_mask]
+    sample_id = sample_id[sample_mask]
+
+    condition_id = [label_map[l] for l in condition_id]
+    condition_id = np.asarray(condition_id)
+    condition_id = condition_id[sample_mask]
+
+    if cell_id.size == 0:
+        raise ValueError("No cells left after filtering by sample_ids.")
+
+    hr = {k: v for k, v in high_response.items() if k != "samples"}
+
+    # For each filter 
+    for cluster_id, res in hr.items():
+        high_ids = set(res["cell_ids"])
+        filter_diff = res["filter_diff"]
+
+        cluster_dir = os.path.join(save_path, f"filter_{cluster_id}")
+        os.makedirs(cluster_dir, exist_ok=True)
+
+        all_selected_rows = []
+
+        for sid in np.unique(sample_id):
+            smask = sample_id == sid
+
+            sx = x[smask]
+            sy  = y[smask]
+            s_cell_id  = cell_id[smask]
+            s_cell_type = cell_type[smask]
+            s_condition_id  = condition_id[smask]
+
+            sel_mask = np.isin(s_cell_id, list(high_ids))
+            n_selected = int(sel_mask.sum())
+            n_total = int(smask.sum())
+
+            if n_selected == 0:
+                print(f"  [Filter {cluster_id} | Sample {sid}] "
+                      f"0 selected cells — skipping.")
+                continue
+
+            # Make the spatial.png
+            fig, ax = plt.subplots(figsize=(8, 7), dpi=150)
+            ax.scatter(
+                sx[~sel_mask], sy[~sel_mask],
+                c="#b0b0b0", s=0.25, rasterized=True
+            )
+            ax.scatter(
+                sx[sel_mask], sy[sel_mask],
+                c="#8b0000", s=0.25, rasterized=True,
+                label=f"Selected (n={n_selected})"
+            )
+            ax.set_title(
+                f"Filter {cluster_id} | Sample {sid} | "
+                f"{n_selected}/{n_total} cells | "
+                f"filter_diff={filter_diff:.3f}",
+                fontsize=8,
+            )
+            ax.set_xlabel("x")
+            ax.set_ylabel("y")
+            ax.legend(markerscale=6, fontsize=7, framealpha=0.6)
+            ax.set_aspect("equal")
+            fig.tight_layout()
+            fig.savefig(
+                os.path.join(cluster_dir, f"spatial_plot_sample_{sid}.png")
+            )
+            plt.close(fig)
+
+            # Get selected
+            all_selected_rows.append(pd.DataFrame({
+                "x": sx[sel_mask],
+                "y": sy[sel_mask],
+                "cell_id": s_cell_id[sel_mask],
+                "cell_type": s_cell_type[sel_mask],
+                "condition_id": s_condition_id[sel_mask],
+                "sample_id": sid,
+            }))
+
+            print(f"  [Filter {cluster_id} | Sample {sid}] "
+                  f"{n_selected}/{n_total} cells selected.")
+
+        # Per-filtert csv
+        if all_selected_rows:
+            all_selected_df = pd.concat(all_selected_rows, ignore_index=True)
+            all_selected_df["cluster_id"]  = cluster_id
+            all_selected_df["filter_diff"] = round(filter_diff, 4)
+
+            out_path = os.path.join(cluster_dir, "all_selected_cells.csv")
+            all_selected_df.to_csv(out_path, index=False)
+
+            print(f"[Filter {cluster_id}] {len(all_selected_df)} cells across "
+                  f"{all_selected_df['sample_id'].nunique()} samples → {out_path}")
+        else:
+            print(f"[Filter {cluster_id}] No selected cells in any sample.")
+
+    return save_path
+
+
+
+
+# Archived functions
 
 def save_high_response_stats(
     high_response: dict,
@@ -548,7 +691,7 @@ def save_high_response_stats(
                   f"{os.path.join(cluster_dir, 'enrichment_summary.csv')}")
             
     return save_path
-            
+
 
 def enrichment_summary(save_path: str, 
                        test: bool = True,
@@ -673,3 +816,4 @@ def enrichment_summary(save_path: str,
     fig.write_html(output_file, include_plotlyjs="cdn")
     print(f"Enrichment summary report written → {os.path.abspath(output_file)}")
     return os.path.abspath(output_file)
+
