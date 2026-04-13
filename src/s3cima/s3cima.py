@@ -119,8 +119,10 @@ def run_s3cima(
                                     test = False)
     
 
-    # s3cima_plot.enrichment_summary(test_fig_save_path,
-    #                                test=True)
-    # s3cima_plot.enrichment_summary(train_fig_save_path,
-    #                                test=False)
+    s3cima_plot.enrichment_summary(test_fig_save_path,
+                                   cell_type, sample_id,
+                                   test=True)
+    s3cima_plot.enrichment_summary(train_fig_save_path,
+                                   cell_type, sample_id,
+                                   test=False)
 

@@ -8,6 +8,7 @@ import glob
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -512,9 +513,277 @@ def save_stats(
     return save_path
 
 
+def enrichment_summary(
+    save_path: str,
+    cell_type: np.ndarray,
+    sample_id: np.ndarray,
+    test: bool = True,
+    output_file: str = None,
+) -> str:
+    """
+    For every filter_ folder found under save_path:
+      1. Reads all_selected_cells.csv
+      2. Saves a matplotlib bar chart of cell type proportions in selected cells,
+         titled with the majority condition label
+      3. Computes per-sample log2 enrichment (selected vs background frequency)
+         using the full cell_type / sample_id arrays as background
+      4. Saves a single interactive Plotly HTML with one enrichment bar chart
+         per filter (mean log2 enrichment ± std across samples)
+
+    TODO - this function is a bit messy
+
+    Parameters
+    ----------
+    save_path   : str         — root directory passed to save_high_response_stats
+    cell_type   : np.ndarray  — cell type labels for ALL cells in the dataset
+    sample_id   : np.ndarray  — sample IDs for ALL cells in the dataset
+    test        : bool        — look under /test or /train subdirectory
+    output_file : str         — path for the HTML; defaults to
+                                <save_path>/enrichment_summary_report_<prefix>.html
+
+    Returns
+    -------
+    str — absolute path to the written HTML file
+    """
+    prefix = "test" if test else "train"
+
+    if output_file is None:
+        output_file = os.path.join(
+            save_path, f"enrichment_summary_report_{prefix}.html"
+        )
+
+    # Find the selected.csv files
+    csv_files = sorted(
+        glob.glob(os.path.join(save_path, "filter_*", "all_selected_cells.csv"))
+    )
+    if not csv_files:
+        raise FileNotFoundError(
+            f"No all_selected_cells.csv files found under: {save_path}"
+        )
+
+    all_cell_types = np.unique(cell_type)
+
+    # Pre-compute background: per-sample cell type counts from full dataset
+    bg_counts = {}   # {sid: {ct: count}}
+    bg_totals = {}   # {sid: total_cells}
+    for sid in np.unique(sample_id):
+        smask = sample_id == sid
+        bg_totals[str(sid)] = int(smask.sum())
+        ct_in_sample = cell_type[smask]
+        bg_counts[str(sid)] = {ct: int((ct_in_sample == ct).sum())
+                          for ct in all_cell_types}
+
+    # Load each filter
+    filters = [] 
+
+    for csv_path in csv_files:
+        df = pd.read_csv(csv_path)
+
+        cluster_id  = (
+            int(df["cluster_id"].iloc[0])
+            if "cluster_id" in df.columns
+            else os.path.basename(os.path.dirname(csv_path)).replace("filter_", "")
+        )
+        filter_diff = (
+            round(float(df["filter_diff"].iloc[0]), 4)
+            if "filter_diff" in df.columns
+            else float("nan")
+        )
+
+        # Condition label
+        if "condition_id" in df.columns:
+            unique_conds = df["condition_id"].unique()
+            top = df["condition_id"].value_counts()
+            if len(unique_conds) == 1 or top.iloc[0] / len(df) >= 0.9:
+                condition_label = str(top.index[0])
+            else:
+                condition_label = "mixed"
+        else:
+            condition_label = "unknown"
+
+        # Cell type proportions across all selected cells (for matplotlib)
+        ct_counts = df["cell_type"].value_counts()
+        ct_props  = (ct_counts / ct_counts.sum()).reset_index()
+        ct_props.columns = ["cell_type", "proportion"]
+        ct_props = ct_props.sort_values("proportion", ascending=False)
+
+        # Per-sample log2 enrichment
+        enrichment_rows = []
+        for sid, sid_df in df.groupby("sample_id"):
+            # String conversion due to CSV saving
+            sid = str(sid)
+
+            n_selected = len(sid_df)
+            n_bg = bg_totals.get(sid, 0) - n_selected
+            if n_bg <= 0 or n_selected == 0:
+                continue
+
+            pseudo = 1.0 / (n_selected + n_bg)
+
+            for ct in all_cell_types:
+                count_sel = int((sid_df["cell_type"] == ct).sum())
+                count_bg = bg_counts.get(sid, {}).get(ct, 0) - count_sel
+                count_bg = max(count_bg, 0)
+
+                prop_sel = count_sel / n_selected
+                prop_bg = count_bg  / n_bg if n_bg > 0 else 0.0
+
+                log2_fc = np.log2(
+                    (prop_sel + pseudo) / (prop_bg + pseudo)
+                )
+                enrichment_rows.append({
+                    "cell_type":       ct,
+                    "log2_enrichment": log2_fc,
+                    "sample_id":       sid,
+                })
+
+        if enrichment_rows:
+            enrich_df = pd.DataFrame(enrichment_rows)
+            summary = (
+                enrich_df.groupby("cell_type")["log2_enrichment"]
+                .agg(mean_log2_enrichment="mean", std_log2_enrichment="std")
+                .reindex(all_cell_types, fill_value=0)
+                .reset_index()
+                .sort_values("mean_log2_enrichment", ascending=True)
+            )
+        else:
+            summary = pd.DataFrame(
+                columns=["cell_type", "mean_log2_enrichment", "std_log2_enrichment"]
+            )
+
+        filters.append((cluster_id, filter_diff, condition_label, ct_props, summary))
+
+    # Matplotlib bar chart per filter
+    for cluster_id, filter_diff, condition_label, ct_props, _ in filters:
+        cluster_dir = os.path.join(save_path, f"filter_{cluster_id}")
+        n_types = len(ct_props)
+        fig_h = max(4, 0.4 * n_types + 1.5)
+
+        fig, ax = plt.subplots(figsize=(8, fig_h), dpi=150)
+        bars = ax.barh(
+            ct_props["cell_type"][::-1],
+            ct_props["proportion"][::-1],
+            color="#8b0000",
+            edgecolor="white",
+            linewidth=0.4,
+            height=0.65,
+        )
+        for bar, val in zip(bars, ct_props["proportion"][::-1]):
+            ax.text(
+                bar.get_width() + 0.003,
+                bar.get_y() + bar.get_height() / 2,
+                f"{val:.1%}",
+                va="center", ha="left",
+                fontsize=7, color="#333333",
+            )
+        ax.set_xlabel("Proportion of selected cells", fontsize=9)
+        ax.set_title(
+            f"Filter {cluster_id}  |  majority condition: {condition_label}"
+            f"  |  filter_diff: {filter_diff:.4f}",
+            fontsize=9, fontweight="bold", pad=10,
+        )
+        ax.xaxis.set_major_formatter(
+            mticker.PercentFormatter(xmax=1, decimals=0)
+        )
+        ax.set_xlim(0, ct_props["proportion"].max() * 1.18)
+        ax.spines[["top", "right"]].set_visible(False)
+        ax.tick_params(axis="both", labelsize=8)
+        ax.set_facecolor("#fafafa")
+        fig.patch.set_facecolor("#ffffff")
+        fig.tight_layout()
+        fig.savefig(
+            os.path.join(cluster_dir, "cell_type_proportions.png"),
+            bbox_inches="tight",
+        )
+        plt.close(fig)
+        print(f"  [Filter {cluster_id}] Proportion plot saved.")
+
+    # Combined plotly HTML
+    n = len(filters)
+    ncols  = int(min(3, n)) if n != 4 else 2
+    nrows  = int(np.ceil(n / ncols))
+
+    subplot_titles = [
+        f"Filter {cid}  |  {cond}  |  diff={fdiff:.3f}"
+        for cid, fdiff, cond, _, _ in filters
+    ]
+
+    fig = make_subplots(
+        rows=nrows, cols=ncols,
+        subplot_titles=subplot_titles,
+        vertical_spacing=0.28 / max(nrows, 1),
+        horizontal_spacing=0.22 / max(ncols, 1),
+    )
+
+    for i, (cluster_id, filter_diff, condition_label, _, summary) in enumerate(filters):
+        row = i // ncols + 1
+        col = i % ncols + 1
+
+        if summary.empty:
+            continue
+
+        has_std = summary["std_log2_enrichment"].notna().any()
+        bar_colors  = [
+            "#8b0000" if v >= 0 else "#2166ac"
+            for v in summary["mean_log2_enrichment"]
+        ]
+        customdata  = list(zip(
+            summary["cell_type"],
+            summary["mean_log2_enrichment"].round(3),
+            summary["std_log2_enrichment"].fillna(0).round(3),
+        ))
+
+        fig.add_trace(
+            go.Bar(
+                x=summary["mean_log2_enrichment"],
+                y=summary["cell_type"],
+                orientation="h",
+                marker_color=bar_colors,
+                error_x=dict(
+                    type="data",
+                    array=summary["std_log2_enrichment"].fillna(0).tolist(),
+                    visible=True,
+                    thickness=1.5,
+                    width=4,
+                ) if has_std else None,
+                customdata=customdata,
+                hovertemplate=(
+                    "<b>%{customdata[0]}</b><br>"
+                    "log2 enrichment: %{customdata[1]:.3f}<br>"
+                    "± std: %{customdata[2]:.3f}<extra></extra>"
+                ),
+                showlegend=False,
+            ),
+            row=row, col=col,
+        )
+        fig.update_xaxes(
+            title_text="log2 enrichment",
+            zeroline=True, zerolinewidth=1, zerolinecolor="rgba(0,0,0,0.3)",
+            row=row, col=col,
+        )
+        fig.update_yaxes(automargin=True, 
+            categoryorder="array",
+            categoryarray=summary["cell_type"].tolist(),
+            dtick=1,
+            row=row, col=col)
+
+    fig.update_layout(
+        height=max(350, 400 * nrows),
+        title_text=f"Consensus Filter Enrichment Summary ({prefix})",
+        title_font_size=15,
+        paper_bgcolor="#f7f6f2",
+        plot_bgcolor="#ffffff",
+        font=dict(family="Arial, sans-serif", size=11),
+    )
+    fig.show()
+
+    os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
+    fig.write_html(output_file, include_plotlyjs="cdn")
+    print(f"Enrichment summary report written → {os.path.abspath(output_file)}")
+    return os.path.abspath(output_file)
 
 
-# Archived functions
+# Archived functions ---------------------------------------------------------
 
 def save_high_response_stats(
     high_response: dict,
@@ -693,7 +962,7 @@ def save_high_response_stats(
     return save_path
 
 
-def enrichment_summary(save_path: str, 
+def enrichment_summary_old(save_path: str, 
                        test: bool = True,
                        output_file: str = None) -> str:
     """
