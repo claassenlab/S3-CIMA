@@ -119,7 +119,7 @@ def _compute_filter_diff(consensus_conv, consensus_out, consensus_biases,
         y_pred, filter_class = _single_filter_output(
             conv_w, bias, out_w, valid_samples, mp
         )
-        in_class  = y_true == filter_class
+        in_class = y_true == filter_class
         out_class = ~in_class
         if in_class.sum() == 0 or out_class.sum() == 0:
             filter_diff[i] = 0.0   # degenerate case
@@ -196,13 +196,13 @@ def get_discriminative_filters(
         params = torch.load(ckpt_path, map_location=device, weights_only=False)
 
         model = CellCNN(
-            nmark        = params["nmarkers"],
-            nfilter      = params["nfilter"],
-            k            = params["k"],
-            n_classes    = params["n_classes"],
-            dropout      = params["dropout"],
-            dropout_p    = params["dropout_p"],
-            regression   = params["regression"],
+            nmark = params["nmarkers"],
+            nfilter = params["nfilter"],
+            k = params["k"],
+            n_classes = params["n_classes"],
+            dropout = params["dropout"],
+            dropout_p = params["dropout_p"],
+            regression = params["regression"],
             selection_type = params["selection_type"],
         )
         model.load_state_dict(params["model_state_dict"])
@@ -233,9 +233,7 @@ def get_discriminative_filters(
         with open(log_file, "a") as log:
             log.write(f"\n[Run {run}] Validation balanced accuracy: {ba:.2f}, Validation Macro F1 Score: {f1:.2f}\n")
 
-    # ----------------------------------------------------------------
-    # 2. Select runs above threshold; always keep at least 3
-    # ----------------------------------------------------------------
+    # Select runs above threshold
     sorted_runs = sorted(accuracies, key=accuracies.get, reverse=True)
     passing_runs = [r for r in sorted_runs if accuracies[r] >= accur_thres]
 
