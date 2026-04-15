@@ -41,6 +41,7 @@ The model training parameters and outputs is written in a log file including:
 
 For one anchor population, S3-CIMA generates the following structure of plots: 
 
+```
 plots
   |----- test
   |        |----- filter_x
@@ -75,10 +76,24 @@ plots
            |          |----- ... 
            |
            |----- ...
+```
 
+The train/test directories correspond to the samples used to train the model and the samples kept aside to test the identified filters on an unseen subset the data.
+Strong, generalisable filters should identify similar cell types between train/test provided samples are not wildly heterogeneous. 
 
+### all_selected_cells csv 
+
+This csv contains the cell ids of all the cells in the relevant train or test samples that were selected by the filter.
+
+### cell_type proportions.png
+
+This plot represents the overall proportion of each cell type in the selected cells.
+
+### spatial_plot_sample_xxx.png
+
+For each sample that has at least one selected cell, plots the selected cells in the original spatial dimensions. The number of spatial plots varies per filter - 
+some filters might select cells across samples from one condition, other filters might select cells from another.
  
-
 
  # Citation
 
