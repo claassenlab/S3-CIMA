@@ -37,9 +37,47 @@ The model training parameters and outputs is written in a log file including:
 •	Balanced accuracy score on the train/validation/test set 
 
 
-## plot_results output:
+## S3-CIMA graphical output:
 
-Plotting not yet added ! Will be done very soon.
+For one anchor population, S3-CIMA generates the following structure of plots: 
+
+plots
+  |----- test
+  |        |----- filter_x
+  |        |          |----- all_selected_cells.csv
+  |        |          |----- cell_type_proportions.png
+  |        |          |----- spatial_plot_sample_xxxx.png
+  |        |          |----- spatial_plot_sample_xxxy.png
+  |        |          |----- ... 
+  |        |
+  |        |----- filter_y
+  |        |          |----- all_selected_cells.csv
+  |        |          |----- cell_type_proportions.png
+  |        |          |----- spatial_plot_sample_xxxx.png
+  |        |          |----- spatial_plot_sample_xxxy.png
+  |        |          |----- ... 
+  |        |
+  |        |----- ...
+  |
+  |----- train
+           |----- filter_x
+           |          |----- all_selected_cells.csv
+           |          |----- cell_type_proportions.png
+           |          |----- spatial_plot_sample_xxxx.png
+           |          |----- spatial_plot_sample_xxxy.png
+           |          |----- ... 
+           |
+           |----- filter_y
+           |          |----- all_selected_cells.csv
+           |          |----- cell_type_proportions.png
+           |          |----- spatial_plot_sample_xxxx.png
+           |          |----- spatial_plot_sample_xxxy.png
+           |          |----- ... 
+           |
+           |----- ...
+
+
+ 
 
 
  # Citation
