@@ -119,7 +119,7 @@ def _compute_filter_diff(consensus_conv, consensus_out, consensus_biases,
         y_pred, filter_class = _single_filter_output(
             conv_w, bias, out_w, valid_samples, mp
         )
-        in_class  = y_true == filter_class
+        in_class = y_true == filter_class
         out_class = ~in_class
         if in_class.sum() == 0 or out_class.sum() == 0:
             filter_diff[i] = 0.0   # degenerate case
@@ -167,7 +167,6 @@ def get_discriminative_filters(
     if not classification:
         raise Exception("Regression not implemented yet")
 
-
     # Validate genes if provided
     if genes is not None:
         genes = list(genes)
@@ -177,7 +176,6 @@ def get_discriminative_filters(
             )
         
     # Get the sample information from the validation dataset
-
     t_loader = DataLoader(
         validation_subset, batch_size=batch_size, shuffle=False, num_workers=num_workers
     )
@@ -198,13 +196,13 @@ def get_discriminative_filters(
         params = torch.load(ckpt_path, map_location=device, weights_only=False)
 
         model = CellCNN(
-            nmark        = params["nmarkers"],
-            nfilter      = params["nfilter"],
-            k            = params["k"],
-            n_classes    = params["n_classes"],
-            dropout      = params["dropout"],
-            dropout_p    = params["dropout_p"],
-            regression   = params["regression"],
+            nmark = params["nmarkers"],
+            nfilter = params["nfilter"],
+            k = params["k"],
+            n_classes = params["n_classes"],
+            dropout = params["dropout"],
+            dropout_p = params["dropout_p"],
+            regression = params["regression"],
             selection_type = params["selection_type"],
         )
         model.load_state_dict(params["model_state_dict"])
@@ -235,9 +233,7 @@ def get_discriminative_filters(
         with open(log_file, "a") as log:
             log.write(f"\n[Run {run}] Validation balanced accuracy: {ba:.2f}, Validation Macro F1 Score: {f1:.2f}\n")
 
-    # ----------------------------------------------------------------
-    # 2. Select runs above threshold; always keep at least 3
-    # ----------------------------------------------------------------
+    # Select runs above threshold
     sorted_runs = sorted(accuracies, key=accuracies.get, reverse=True)
     passing_runs = [r for r in sorted_runs if accuracies[r] >= accur_thres]
 
@@ -719,7 +715,7 @@ def fit(dataset: CIMADataset,               # CIMA Args
     current_time = now.strftime("%H_%M_%S")
     current_day = today.strftime("%d_%m_%Y")
 
-    result_folder = f"{save_loc}/results_Anchor{anchor}_K{K}"
+    result_folder = f"{save_loc}/results_Anchor{anchor}_K{K}_{current_day}_{current_time}"
     os.makedirs(result_folder, exist_ok=True)
          
     # Generate the datasets and set classes
@@ -1002,7 +998,7 @@ report classification:
                       f"Test balanced accuracy: {ba:.2f}, Test Macro F1 Score: {f1:.2f}\n")
             log.write(f'Found {counter} discriminative filters with test balanced accuracy above {accur_thres:.2f}\n')
 
-    if len(final_results) == 0:
+    if counter == 0:
         print(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
         print(f"Returning all discriminative filters")
 
@@ -1010,5 +1006,15 @@ report classification:
             log.write(f"[INFO] No discriminative filters had test balanced accuracy above {accur_thres:.2f}.")
 
         final_results = filtered_meta
+
+    # Else return the top n or 4 filters with highest test ba
+    else:
+        if counter > 4:
+            final_results = sorted(final_results, key=lambda x: x["test_ba"], reverse=True)[:4]
+            with open(log_file, "a") as log:
+                log.write(f"[INFO] Top 4 discriminative filters saved.")
+        else:
+            with open(log_file, "a") as log:
+                log.write(f"[INFO] Top {len(final_results)} discriminative filters saved.")
 
     return final_results, loss_vectors, val_loss_vectors, accuracy_vectors, val_accuracy_vectors, test_subset, folds, result_folder

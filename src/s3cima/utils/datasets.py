@@ -101,9 +101,20 @@ class CIMADataset(Dataset):
             tree   = cKDTree(coords)
 
             if anchor == "BG":
-                anchor_idx = self.rng.choice(len(img_ct), 
-                                             size=min(self.bg_sets, len(img_ct)), 
-                                             replace=False)
+                if len(np.unique(img_labels)) == 1:
+                    anchor_idx = self.rng.choice(
+                        len(img_ct), size=min(self.bg_sets, len(img_ct)), replace=False
+                    )
+                else:
+                    unique_labels = np.unique(img_labels)
+                    quota = max(1, self.bg_sets // len(unique_labels))
+                    parts = []
+                    for lbl in unique_labels:
+                        lbl_idx = np.where(img_labels == lbl)[0]
+                        parts.append(
+                            self.rng.choice(lbl_idx, size=min(quota, len(lbl_idx)), replace=False)
+                        )
+                    anchor_idx = np.concatenate(parts)
             else:
                 anchor_idx = np.where(img_ct == anchor)[0]
 
@@ -286,7 +297,7 @@ def make_patient_stratified_splits(
         remaining_pats[lbl] = pats[1:]
 
     sample_pats = np.array([s["pat"] for s in dataset.samples])
-    test_idx    = [i for i, p in enumerate(sample_pats) if p in test_pats]
+    test_idx = [i for i, p in enumerate(sample_pats) if p in test_pats]
     m_test, s_test = get_norm_stats(dataset, test_idx)
     test_subset = NormalizedCIMASubset(Subset(dataset, test_idx), m_test, s_test)
     print(f"Test : {len(test_idx)} samples ({len(test_pats)} patients, "
