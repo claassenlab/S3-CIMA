@@ -14,18 +14,16 @@ class CellCNN(nn.Module):
     """
     PyTorch reimplementation of CellCNN (single time-point).
 
-    Parameters
-    ----------
-    nmark          : int   — number of input markers (features per cell)
-    nfilter        : int   — number of convolutional filters
-    k              : int   — number of top cells to pool per filter
-    n_classes      : int   — output classes (ignored if regression=True)
-    dropout        : bool  — whether to apply dropout after pooling
-    dropout_p      : float — dropout probability
-    regression     : bool  — regression (True) or classification (False)
-    selection_type : str   — 'mean' or 'max' for top-k pooling
+    Args:
+        nmark          : int   — number of input markers (features per cell)
+        nfilter        : int   — number of convolutional filters
+        k              : int   — number of top cells to pool per filter
+        n_classes      : int   — output classes (ignored if regression=True)
+        dropout        : bool  — whether to apply dropout after pooling
+        dropout_p      : float — dropout probability
+        regression     : bool  — regression (True) or classification (False)
+        selection_type : str   — 'mean' or 'max' for top-k pooling
     """
-
     def __init__(
         self,
         nmark: int,
@@ -79,15 +77,13 @@ def select_top_pool(x: torch.Tensor, k: int, selection_type: str = "mean") -> to
     """
     Pools the top-k activated cells per filter.
 
-    Parameters
-    ----------
-    x              : (B, nfilter, ncell) — output of Conv1d after ReLU
-    k              : number of top cells to select per filter
-    selection_type : 'mean' or 'max'
+    Args:
+        x              : (B, nfilter, ncell) — output of Conv1d after ReLU
+        k              : number of top cells to select per filter
+        selection_type : 'mean' or 'max'
 
-    Returns
-    -------
-    (B, nfilter) pooled representation
+    Returns:
+        topk_vals : (B, nfilter) pooled representation
     """
     # topk over the cell dimension (dim=2)
     topk_vals, _ = torch.topk(x, k=k, dim=2) 

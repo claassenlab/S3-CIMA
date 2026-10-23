@@ -38,6 +38,26 @@ class EarlyStopping():
     """
     Early stopping to stop the training when the loss does not improve after
     certain epochs.
+
+    Parameters
+    ----------
+    patience : int
+        Number of epochs to wait before stopping when loss is not improving.
+    min_delta : float
+        Minimum difference between new loss and old loss for new loss to be considered as an improvement.
+    
+    Attributes
+    ----------
+    patience : int
+        Number of epochs to wait before stopping when loss is not improving.
+    min_delta : float
+        Minimum difference between new loss and old loss for new loss to be considered as an improvement.
+    counter : int
+        Counts the number of epochs since the last improvement.
+    best_loss : float or None
+        Best observed validation loss.
+    early_stop : bool
+        Flag indicating whether early stopping should be triggered.
     """
     def __init__(self, patience=10, min_delta=0):
         """
@@ -68,7 +88,13 @@ class EarlyStopping():
 
 
 def set_seed(seed = 42):
-    """Fix the seeds for reproductible runs during training"""
+    """Fix the seeds for reproductible runs during training
+
+    Parameters
+    ----------
+    seed : int
+        The seed value to set for all random number generators.
+    """
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
@@ -162,6 +188,52 @@ def get_discriminative_filters(
     Filter weights shape per run: (nfilter, nmark)
     Only filters connected to non-control classes are retained
     (i.e. output weight to ctrl class [n_classes-1] is NOT the dominant connection).
+
+    Parameters
+    ----------
+    save_model : str
+        Path to the directory containing saved model checkpoints.
+    nruns : int
+        Number of runs to consider.
+    validation_subset : Subset
+        Validation dataset subset.
+    loss_fn : callable
+        Loss function used for evaluation.
+    n_classes : int
+        Number of classes in the classification task.
+    nmarkers : int
+        Number of markers (features) per sample.
+    lr : float
+        Learning rate used during training.
+    batch_size : int
+        Batch size for DataLoader.
+    num_workers : int
+        Number of workers for DataLoader.
+    log_file : str
+        Path to the log file.
+    device : str
+        Device to run the model on (e.g., "cpu" or "cuda").
+    accur_thres : float, optional
+        Accuracy threshold for selecting runs (default is 0.85).
+    dendrogram_cutoff : float, optional
+        Cutoff for hierarchical clustering dendrogram (default is 0.4).
+    filter_diff_threshold : float, optional
+        Threshold for filter difference (default is 0.0).
+    result_folder : str, optional
+        Folder to save results (default is None).
+    genes : list, optional
+        List of gene names corresponding to markers (default is None).
+    has_background : bool, optional
+        Whether the dataset includes background/control samples (default is True).
+    classification : bool, optional
+        Whether the task is classification (default is True).
+    
+    Returns
+    -------
+    consensus_filters : torch.Tensor
+        Tensor containing the consensus filters selected from the clustering.
+    filter_diff : torch.Tensor
+        Tensor containing the differences between the selected filters and the cluster medoids.
     """
     # Block if regression for the moment
     if not classification:
@@ -468,8 +540,12 @@ def train(model,
 
     Returns
     ---
-    epoch_loss : ?
-        Information on loss (loss vector ?)
+    epoch_loss : float
+        Average loss over the epoch.
+    ba : float
+        Balanced accuracy over the epoch.
+    f1 : float
+        Macro F1-score over the epoch.
     '''
     model.train()
 
@@ -528,7 +604,7 @@ def train(model,
 
 
 def validate(model, val_loader, loss_fn, epoch, log_file, device):
-    '''Train function for the model. 
+    '''Validation function for the model. 
 
     Arguments
     ---
@@ -545,8 +621,12 @@ def validate(model, val_loader, loss_fn, epoch, log_file, device):
 
     Returns
     ---
-    epoch_loss : ?
-        Information on loss (loss vector ?)
+    epoch_loss : float
+        Average loss over the validation epoch.
+    ba : float
+        Balanced accuracy over the validation epoch.
+    f1 : float
+        Macro F1-score over the validation epoch.
     '''
     model.eval()
 
@@ -599,25 +679,29 @@ def validate(model, val_loader, loss_fn, epoch, log_file, device):
 
 
 def test(model, test_loader, loss_fn, epoch, figure_path, log_file, device):
-    '''Train function for the model. 
+    '''Test function for the model. 
 
     Arguments
     ---
     model : nn.Module descendant
         Model through which training data is passed
-    val_loader : DataLoader
-        Validation data with features and labels
+    test_loader : DataLoader
+        Test data with features and labels
     loss_fn : function
         Method of loss calculation
-    optimizer : function (taken using torch.optim)
-        Optimisation method
+    figure_path : str
+        Path to save figures generated during testing.
     epoch : int
         Number of passes through the network
 
     Returns
     ---
-    epoch_loss : ?
-        Information on loss (loss vector ?)
+    epoch_loss : float
+        Average loss over the test epoch.
+    all_pred_classes : list
+        List of predicted class labels for all test samples.
+    all_true_classes : list
+        List of true class labels for all test samples.
     '''
     model.eval()
 
@@ -688,15 +772,64 @@ def fit(dataset: CIMADataset,               # CIMA Args
         num_workers: int = 8,
         early_stopping = True,
         patience: int = 3,
-        seed: int = 12345,
+        seed: int = 420,
         classification: bool = True):
     '''Fit an S3CIMA Model to a dataset.
 
-    Arguments
-    ---
+    Parameters
+    ----------
+    dataset : CIMADataset
+        The dataset to fit the model on.
+    anchor : str
+            Cell type used as the anchor. Neighborhoods are built around cells
+            of this type.
+    K : int
+        Number of nearest neighbors defining the spatial neighborhood around
+        each anchor cell..
+    ncell : int
+        Number of cells in each multi-cell input set passed to the network.
+    genes : list
+        List of gene identifiers.
+    save_loc : str
+        Location to save results.
+    nruns : int, optional
+        Number of runs for the model (default is 5).
+    dendrogram_cutoff : float, optional
+        Cutoff for dendrogram clustering (default is 0.4).
+    n_val_folds : int, optional
+        Number of validation folds (default is 3).
+    maxpool_percentages : list, optional
+        List of maxpool percentages (default is [1, 5, 10, 20, 50, 100]).
+    nfilter_selection : list, optional
+        List of filter selections (default is [3, 4, 5, 6, 7, 8, 9, 10]).
+    dropout : bool, optional
+        Whether to use dropout (default is True).
+    dropout_p : float, optional
+        Dropout probability (default is 0.5).
+    l2 : float, optional
+        L2 regularization parameter (default is 1e-4).
+    background : bool, optional
+        Whether to include background samples (default is False).
+    batch_size : int, optional
+        Batch size for training (default is 256).
+    lr : float, optional
+        Learning rate (default is 0.01).
+    epochs : int, optional
+        Number of training epochs (default is 20).
+    num_workers : int, optional
+        Number of workers for data loading (default is 8).
+    early_stopping : bool, optional
+        Whether to use early stopping (default is True).
+    patience : int, optional
+        Patience for early stopping (default is 3).
+    seed : int, optional
+        Random seed (default is 12345).
+    classification : bool, optional
+        Whether the task is classification (default is True).
 
     Returns
-    ---
+    -------
+    None
 
     '''
     set_seed(seed)

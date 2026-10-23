@@ -1,0 +1,867 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>s3cima.utils.plot &mdash; S3-CIMA 23/10/2026 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=eadfcba0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            S3-CIMA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">S3-CIMA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">s3cima.utils.plot</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for s3cima.utils.plot</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Plotting functions to for the S3-CIMA model outputs&quot;&quot;&quot;</span>
+
+<span class="c1"># Imports</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">glob</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.ticker</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mticker</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.graph_objects</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">go</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">plotly.subplots</span><span class="w"> </span><span class="kn">import</span> <span class="n">make_subplots</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">plotly.io</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pio</span>
+
+<span class="c1"># CONSTANTS - unchanged as these are fixed in S3-CIMA file generation</span>
+<span class="n">_BAR_COLOR</span> <span class="o">=</span> <span class="s2">&quot;#8b0000&quot;</span>
+<span class="n">_CSV_COLUMNS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;cell_type&quot;</span><span class="p">,</span> <span class="s2">&quot;sample_id&quot;</span><span class="p">,</span> <span class="s2">&quot;cluster_id&quot;</span><span class="p">,</span> <span class="s2">&quot;filter_diff&quot;</span><span class="p">,</span> <span class="s2">&quot;condition_id&quot;</span><span class="p">}</span>
+<span class="n">_SUMMARY_COLUMNS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">,</span> <span class="s2">&quot;mean_log2_enrichment&quot;</span><span class="p">,</span> <span class="s2">&quot;std_log2_enrichment&quot;</span><span class="p">]</span>
+
+<span class="c1"># Helpers ------------------------------------------------------------------------------</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_condition_label</span><span class="p">(</span><span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Majority condition if it covers &gt;= 90% of selected cells, else &#39;mixed&#39;.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;condition_id&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;unknown&quot;</span>
+    <span class="n">top</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;condition_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">top</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">top</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.9</span> <span class="k">else</span> <span class="s2">&quot;mixed&quot;</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_log2_enrichment_summary</span><span class="p">(</span>
+    <span class="n">sel_df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">bg_counts</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">bg_totals</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Per-sample log2(selected frequency / background frequency) for every cell type,</span>
+<span class="sd">    summarised as mean and std across samples. The background of a sample is all of</span>
+<span class="sd">    its cells minus the selected ones. Computed as samples x cell-types matrices.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_sel</span> <span class="o">=</span> <span class="n">sel_df</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;sample_id&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="n">sel</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">sel_df</span><span class="p">[</span><span class="s2">&quot;sample_id&quot;</span><span class="p">],</span> <span class="n">sel_df</span><span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">])</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">n_sel</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">bg_counts</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="n">n_bg</span> <span class="o">=</span> <span class="n">bg_totals</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">n_sel</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">n_sel</span>
+
+    <span class="n">keep</span> <span class="o">=</span> <span class="n">n_bg</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">keep</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="n">_SUMMARY_COLUMNS</span><span class="p">)</span>
+    <span class="n">sel</span><span class="p">,</span> <span class="n">n_sel</span><span class="p">,</span> <span class="n">n_bg</span> <span class="o">=</span> <span class="n">sel</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">n_sel</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">n_bg</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+    <span class="n">bg</span> <span class="o">=</span> <span class="n">bg_counts</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">sel</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">fill_value</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">pseudo</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">n_sel</span> <span class="o">+</span> <span class="n">n_bg</span><span class="p">)</span>
+    <span class="n">prop_sel</span> <span class="o">=</span> <span class="n">sel</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">n_sel</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">prop_bg</span> <span class="o">=</span> <span class="p">(</span><span class="n">bg</span> <span class="o">-</span> <span class="n">sel</span><span class="p">)</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">lower</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">div</span><span class="p">(</span><span class="n">n_bg</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">log2_fc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">prop_sel</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pseudo</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">prop_bg</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pseudo</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s2">&quot;cell_type&quot;</span><span class="p">:</span> <span class="n">log2_fc</span><span class="o">.</span><span class="n">columns</span><span class="p">,</span>
+        <span class="s2">&quot;mean_log2_enrichment&quot;</span><span class="p">:</span> <span class="n">log2_fc</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span>
+        <span class="s2">&quot;std_log2_enrichment&quot;</span><span class="p">:</span> <span class="n">log2_fc</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span>  <span class="c1"># ddof=1; NaN for one sample</span>
+    <span class="p">})</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s2">&quot;mean_log2_enrichment&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_plot_proportions</span><span class="p">(</span>
+    <span class="n">df</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">out_dir</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">cluster_id</span><span class="p">,</span> <span class="n">condition_label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">filter_diff</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save a horizontal bar chart of cell type proportions among selected cells.&quot;&quot;&quot;</span>
+    <span class="c1"># Ascending order puts the largest proportion at the top of a barh plot.</span>
+    <span class="n">props</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">(</span><span class="n">normalize</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.4</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">props</span><span class="p">)</span> <span class="o">+</span> <span class="mf">1.5</span><span class="p">)),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+    <span class="n">bars</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">barh</span><span class="p">(</span>
+        <span class="n">props</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">(),</span>
+        <span class="n">color</span><span class="o">=</span><span class="n">_BAR_COLOR</span><span class="p">,</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;white&quot;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mf">0.65</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">bar</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bars</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()):</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">get_width</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.003</span><span class="p">,</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_y</span><span class="p">()</span> <span class="o">+</span> <span class="n">bar</span><span class="o">.</span><span class="n">get_height</span><span class="p">()</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s2">.1%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#333333&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;Proportion of selected cells&quot;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">  |  majority condition: </span><span class="si">{</span><span class="n">condition_label</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;  |  filter_diff: </span><span class="si">{</span><span class="n">filter_diff</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="n">fontsize</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span> <span class="n">fontweight</span><span class="o">=</span><span class="s2">&quot;bold&quot;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">mticker</span><span class="o">.</span><span class="n">PercentFormatter</span><span class="p">(</span><span class="n">xmax</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">decimals</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">props</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">*</span> <span class="mf">1.18</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">spines</span><span class="p">[[</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">set_visible</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s2">&quot;#fafafa&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">patch</span><span class="o">.</span><span class="n">set_facecolor</span><span class="p">(</span><span class="s2">&quot;#ffffff&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="s2">&quot;cell_type_proportions.png&quot;</span><span class="p">),</span> <span class="n">bbox_inches</span><span class="o">=</span><span class="s2">&quot;tight&quot;</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">] Proportion plot saved.&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_enrichment_figure</span><span class="p">(</span><span class="n">filters</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span> <span class="n">prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One subplot per filter showing only positively enriched cell types.&quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">filters</span><span class="p">)</span>
+    <span class="n">ncols</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">4</span> <span class="k">else</span> <span class="nb">min</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+    <span class="n">nrows</span> <span class="o">=</span> <span class="o">-</span><span class="p">(</span><span class="o">-</span><span class="n">n</span> <span class="o">//</span> <span class="n">ncols</span><span class="p">)</span>  <span class="c1"># ceiling division</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">make_subplots</span><span class="p">(</span>
+        <span class="n">rows</span><span class="o">=</span><span class="n">nrows</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">ncols</span><span class="p">,</span>
+        <span class="n">subplot_titles</span><span class="o">=</span><span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;Filter </span><span class="si">{</span><span class="n">cid</span><span class="si">}</span><span class="s2">  |  </span><span class="si">{</span><span class="n">cond</span><span class="si">}</span><span class="s2">  |  diff=</span><span class="si">{</span><span class="n">fdiff</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">cid</span><span class="p">,</span> <span class="n">fdiff</span><span class="p">,</span> <span class="n">cond</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">filters</span>
+        <span class="p">],</span>
+        <span class="n">vertical_spacing</span><span class="o">=</span><span class="mf">0.28</span> <span class="o">/</span> <span class="n">nrows</span><span class="p">,</span>
+        <span class="n">horizontal_spacing</span><span class="o">=</span><span class="mf">0.22</span> <span class="o">/</span> <span class="n">ncols</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">enriched</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filters</span><span class="p">):</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">ncols</span><span class="p">)</span>
+        <span class="n">row</span><span class="p">,</span> <span class="n">col</span> <span class="o">=</span> <span class="n">row</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">col</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">enriched</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">axis</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># make_subplots numbers axes row-major</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">add_annotation</span><span class="p">(</span>
+                <span class="n">text</span><span class="o">=</span><span class="s2">&quot;No enriched cell types&quot;</span><span class="p">,</span> <span class="n">showarrow</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">x</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">xref</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;x</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2"> domain&quot;</span><span class="p">,</span> <span class="n">yref</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;y</span><span class="si">{</span><span class="n">axis</span><span class="si">}</span><span class="s2"> domain&quot;</span><span class="p">,</span>
+                <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;#666666&quot;</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="n">std</span> <span class="o">=</span> <span class="n">enriched</span><span class="p">[</span><span class="s2">&quot;std_log2_enrichment&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">add_trace</span><span class="p">(</span>
+            <span class="n">go</span><span class="o">.</span><span class="n">Bar</span><span class="p">(</span>
+                <span class="n">x</span><span class="o">=</span><span class="n">enriched</span><span class="p">[</span><span class="s2">&quot;mean_log2_enrichment&quot;</span><span class="p">],</span>
+                <span class="n">y</span><span class="o">=</span><span class="n">enriched</span><span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">],</span>
+                <span class="n">orientation</span><span class="o">=</span><span class="s2">&quot;h&quot;</span><span class="p">,</span>
+                <span class="n">marker_color</span><span class="o">=</span><span class="n">_BAR_COLOR</span><span class="p">,</span>
+                <span class="n">error_x</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                    <span class="nb">type</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">array</span><span class="o">=</span><span class="n">std</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">visible</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">thickness</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                <span class="p">)</span> <span class="k">if</span> <span class="n">enriched</span><span class="p">[</span><span class="s2">&quot;std_log2_enrichment&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">()</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">customdata</span><span class="o">=</span><span class="n">std</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[:,</span> <span class="kc">None</span><span class="p">],</span>
+                <span class="n">hovertemplate</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;&lt;b&gt;%</span><span class="si">{y}</span><span class="s2">&lt;/b&gt;&lt;br&gt;&quot;</span>
+                    <span class="s2">&quot;log2 enrichment: %</span><span class="si">{x:.3f}</span><span class="s2">&lt;br&gt;&quot;</span>
+                    <span class="s2">&quot;± std: %</span><span class="si">{customdata[0]:.3f}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;&quot;</span>
+                <span class="p">),</span>
+                <span class="n">showlegend</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_xaxes</span><span class="p">(</span>
+            <span class="n">title_text</span><span class="o">=</span><span class="s2">&quot;log2 enrichment&quot;</span><span class="p">,</span>
+            <span class="n">zeroline</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">zerolinewidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">zerolinecolor</span><span class="o">=</span><span class="s2">&quot;rgba(0,0,0,0.3)&quot;</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">update_yaxes</span><span class="p">(</span>
+            <span class="n">automargin</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">categoryorder</span><span class="o">=</span><span class="s2">&quot;array&quot;</span><span class="p">,</span>
+            <span class="n">categoryarray</span><span class="o">=</span><span class="n">enriched</span><span class="p">[</span><span class="s2">&quot;cell_type&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">dtick</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">row</span><span class="o">=</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="o">=</span><span class="n">col</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">height</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">350</span><span class="p">,</span> <span class="mi">400</span> <span class="o">*</span> <span class="n">nrows</span><span class="p">),</span>
+        <span class="n">title_text</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Consensus Filter Enrichment Summary (</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">,</span>
+        <span class="n">title_font_size</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+        <span class="n">paper_bgcolor</span><span class="o">=</span><span class="s2">&quot;#f7f6f2&quot;</span><span class="p">,</span>
+        <span class="n">plot_bgcolor</span><span class="o">=</span><span class="s2">&quot;#ffffff&quot;</span><span class="p">,</span>
+        <span class="n">font</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">family</span><span class="o">=</span><span class="s2">&quot;Arial, sans-serif&quot;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="mi">11</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">fig</span>
+
+
+<span class="c1"># Functions ------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="plot_filter_weights">
+<a class="viewcode-back" href="../../../api/s3cima.utils.plot.html#s3cima.utils.plot.plot_filter_weights">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">plot_filter_weights</span><span class="p">(</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;consensus_filter_weights&quot;</span><span class="p">,</span>
+    <span class="n">show</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">top_n_genes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Plot a heatmap of gene weights across all filter clusters.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meta        : list of dicts — the &#39;meta&#39; key from extract_and_save_filters output.</span>
+<span class="sd">                  Each dict must contain &#39;cluster&#39;, &#39;dominant_class&#39;, &#39;all_gene_weights&#39;.</span>
+<span class="sd">    save_path   : str  — directory to save the HTML (and PNG) file.</span>
+<span class="sd">    filename    : str  — base filename without extension.</span>
+<span class="sd">    show        : bool — if True, calls fig.show() to display in browser/notebook.</span>
+<span class="sd">    top_n_genes : int  — if provided, only plot the top N genes ranked by max</span>
+<span class="sd">                         absolute weight across all clusters. Useful when nmarkers is large.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Build Dataframe</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+        <span class="n">cluster_label</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;Cluster </span><span class="si">{</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;cluster&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (Filter Diff: </span><span class="si">{</span><span class="n">m</span><span class="p">[</span><span class="s1">&#39;filter_diff&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="n">records</span><span class="p">[</span><span class="n">cluster_label</span><span class="p">]</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;all_gene_weights&quot;</span><span class="p">]</span>  <span class="c1"># {gene: weight}</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">records</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (n_clusters, n_genes)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="c1"># Restrict top N genes</span>
+    <span class="k">if</span> <span class="n">top_n_genes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">top_n_genes</span> <span class="o">&lt;</span> <span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">max_abs</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">top_genes</span> <span class="o">=</span> <span class="n">max_abs</span><span class="o">.</span><span class="n">nlargest</span><span class="p">(</span><span class="n">top_n_genes</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">top_genes</span><span class="p">]</span>
+
+    <span class="c1"># Sort</span>
+    <span class="n">gene_order</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">index</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">gene_order</span><span class="p">]</span>
+
+    <span class="c1"># Heatmap</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">values</span>                          <span class="c1"># (n_clusters, n_genes)</span>
+    <span class="n">x_labels</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>                <span class="c1"># gene names</span>
+    <span class="n">y_labels</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>                  <span class="c1"># cluster labels</span>
+
+    <span class="c1"># Symmetric color scale centred at 0</span>
+    <span class="n">abs_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">go</span><span class="o">.</span><span class="n">Figure</span><span class="p">(</span><span class="n">go</span><span class="o">.</span><span class="n">Heatmap</span><span class="p">(</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">z</span><span class="p">,</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x_labels</span><span class="p">,</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">y_labels</span><span class="p">,</span>
+        <span class="n">colorscale</span>  <span class="o">=</span> <span class="s2">&quot;RdBu_r&quot;</span><span class="p">,</span>
+        <span class="n">zmid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">zmin</span> <span class="o">=</span> <span class="o">-</span><span class="n">abs_max</span><span class="p">,</span>
+        <span class="n">zmax</span> <span class="o">=</span>  <span class="n">abs_max</span><span class="p">,</span>
+        <span class="n">colorbar</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s2">&quot;Weight&quot;</span><span class="p">),</span>
+        <span class="n">hoverongaps</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">hovertemplate</span> <span class="o">=</span> <span class="s2">&quot;Gene: %</span><span class="si">{x}</span><span class="s2">&lt;br&gt;Cluster: %</span><span class="si">{y}</span><span class="s2">&lt;br&gt;Weight: %</span><span class="si">{z:.4f}</span><span class="s2">&lt;extra&gt;&lt;/extra&gt;&quot;</span><span class="p">,</span>
+    <span class="p">))</span>
+
+    <span class="n">n_genes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x_labels</span><span class="p">)</span>
+    <span class="n">n_clusters</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_labels</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="o">.</span><span class="n">update_layout</span><span class="p">(</span>
+        <span class="n">title</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Filter Cluster Gene Weights &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">n_clusters</span><span class="si">}</span><span class="s2"> clusters, </span><span class="si">{</span><span class="n">n_genes</span><span class="si">}</span><span class="s2"> genes)&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&lt;br&gt;&lt;span style=&#39;font-size:14px;font-weight:normal;&#39;&gt;&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Red = positive weight (activating) · Blue = negative (suppressing)&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;&lt;/span&gt;&quot;</span>
+            <span class="p">),</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">xanchor</span> <span class="o">=</span> <span class="s2">&quot;center&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">xaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="s2">&quot;Gene / Marker&quot;</span><span class="p">,</span>
+            <span class="n">tickangle</span> <span class="o">=</span> <span class="o">-</span><span class="mi">45</span><span class="p">,</span>
+            <span class="n">tickfont</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">400</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_genes</span><span class="p">,</span> <span class="mi">1</span><span class="p">))))),</span>
+        <span class="p">),</span>
+        <span class="n">yaxis</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">title_text</span> <span class="o">=</span> <span class="s2">&quot;Filter Cluster&quot;</span><span class="p">,</span>
+            <span class="n">autorange</span> <span class="o">=</span> <span class="s2">&quot;reversed&quot;</span><span class="p">,</span>   <span class="c1"># cluster 0 at top</span>
+            <span class="n">tickfont</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="mi">11</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">height</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="mi">120</span> <span class="o">*</span> <span class="n">n_clusters</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Save as html</span>
+    <span class="n">figure_path</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">/plots&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">figure_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">html_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">figure_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">filename</span><span class="si">}</span><span class="s2">.html&quot;</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">write_html</span><span class="p">(</span><span class="n">html_path</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[INFO] Heatmap saved to </span><span class="si">{</span><span class="n">html_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">show</span><span class="p">:</span>
+        <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">figure_path</span></div>
+
+
+
+<div class="viewcode-block" id="get_high_response_cells_test">
+<a class="viewcode-back" href="../../../api/s3cima.utils.plot.html#s3cima.utils.plot.get_high_response_cells_test">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_high_response_cells_test</span><span class="p">(</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">dataset</span><span class="p">,</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">filter_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For each consensus filter cluster, compute the pooled filter response</span>
+<span class="sd">    for every non-background neighbourhood in the test dataset, threshold at</span>
+<span class="sd">    the filter_threshold quantile, and return the cell IDs of the</span>
+<span class="sd">    high-responding neighbourhoods.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meta             : list of dicts — &#39;meta&#39; key from extract_and_save_filters.</span>
+<span class="sd">                       Each dict must contain &#39;all_gene_weights&#39;, &#39;cluster&#39;,</span>
+<span class="sd">                       &#39;dominant_class&#39;. Optionally &#39;maxpool_percentage&#39;.</span>
+<span class="sd">    dataset          : NormalizedCIMASubset — samples must be</span>
+<span class="sd">                       dicts with keys &#39;intensity&#39;, &#39;is_ctrl&#39;, &#39;cellids&#39;.</span>
+<span class="sd">    genes            : list of str — marker names in the same order as the</span>
+<span class="sd">                       intensity columns used during training.</span>
+<span class="sd">    filter_threshold : float in [0, 1) — responses below this quantile are</span>
+<span class="sd">                       discarded. Default 0.9 retains the top 10%.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict keyed by cluster_id, each value:</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;cell_ids&quot;                : list — unique cell IDs with high response,</span>
+<span class="sd">          &quot;responses&quot;               : np.array — activations of high neighbourhoods,</span>
+<span class="sd">          &quot;all_responses&quot;           : np.array — full activation distribution,</span>
+<span class="sd">          &quot;threshold_val&quot;           : float — quantile cutoff used,</span>
+<span class="sd">          &quot;n_neighbourhoods_above&quot;  : int,</span>
+<span class="sd">          &quot;n_cell_ids&quot;              : int,</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">filter_threshold</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span> \
+        <span class="s2">&quot;filter_threshold must be in [0, 1)&quot;</span>
+
+    <span class="c1"># Collect non-background samples</span>
+    <span class="n">anchor_intensities</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">anchor_cellids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">anchor_labels</span> <span class="o">=</span> <span class="p">[]</span> 
+    <span class="n">anchor_samples</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;is_ctrl&quot;</span><span class="p">]:</span>
+            <span class="k">continue</span>
+        <span class="n">anchor_intensities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;intensity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>  <span class="c1"># (ncell, nmark)</span>
+        <span class="n">anchor_cellids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;cellids&quot;</span><span class="p">])</span>                <span class="c1"># list of cell IDs</span>
+        <span class="n">anchor_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span>
+        <span class="n">anchor_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;pat&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+    <span class="n">anchor_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">anchor_labels</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;No non-background samples found. Check the is_ctrl flag.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">nmark</span> <span class="o">=</span> <span class="n">anchor_intensities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nmark</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;len(genes)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span><span class="si">}</span><span class="s2"> does not match intensity nmark=</span><span class="si">{</span><span class="n">nmark</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="s2">&quot;Ensure genes are provided in the same column order as the &quot;</span>
+            <span class="s2">&quot;intensity matrix used during training.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[INFO] Computing filter responses over &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">)</span><span class="si">}</span><span class="s2"> anchor neighbourhoods &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;across </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span><span class="si">}</span><span class="s2"> filter clusters.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Neighbourhood responses</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+        <span class="n">filter_diff</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;filter_diff&quot;</span><span class="p">]</span>
+        <span class="n">cluster_id</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;cluster&quot;</span><span class="p">]</span>
+        <span class="n">gene_weights</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;all_gene_weights&quot;</span><span class="p">]</span>   <span class="c1"># {gene: weight}, |w|-ranked order</span>
+        <span class="n">mp</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;maxpool_percentage&quot;</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">ntop_frac</span> <span class="o">=</span> <span class="n">mp</span> <span class="o">/</span> <span class="mf">100.0</span>
+
+        <span class="c1"># Reconstruct conv_w in original marker column order</span>
+        <span class="n">conv_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">gene_weights</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">genes</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Compute pooled ReLU activation for each neighbourhood</span>
+        <span class="n">responses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">):</span>
+            <span class="n">g</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span> <span class="o">@</span> <span class="n">conv_w</span><span class="p">)</span>
+            <span class="n">ntop</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">ntop_frac</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">responses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">g</span><span class="p">)[</span><span class="o">-</span><span class="n">ntop</span><span class="p">:])</span>
+
+        <span class="c1"># Collect responsive cell IDs</span>
+        <span class="n">threshold_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="n">filter_threshold</span><span class="p">))</span>
+        <span class="n">high_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">responses</span> <span class="o">&gt;=</span> <span class="n">threshold_val</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Flatten and deduplicate cell IDs across high-responding neighbourhoods</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">unique_cell_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">high_idx</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">anchor_cellids</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+                    <span class="n">unique_cell_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+
+        <span class="n">results</span><span class="p">[</span><span class="n">cluster_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;cell_ids&quot;</span><span class="p">:</span> <span class="n">unique_cell_ids</span><span class="p">,</span>
+            <span class="s2">&quot;responses&quot;</span><span class="p">:</span> <span class="n">responses</span><span class="p">[</span><span class="n">high_idx</span><span class="p">],</span>
+            <span class="s2">&quot;all_responses&quot;</span><span class="p">:</span> <span class="n">responses</span><span class="p">,</span>
+            <span class="s2">&quot;threshold_val&quot;</span><span class="p">:</span> <span class="n">threshold_val</span><span class="p">,</span>
+            <span class="s2">&quot;n_neighbourhoods_above&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">high_idx</span><span class="p">),</span>
+            <span class="s2">&quot;n_cell_ids&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_cell_ids</span><span class="p">),</span>
+            <span class="s2">&quot;filter_diff&quot;</span><span class="p">:</span> <span class="n">filter_diff</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [Cluster </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">]  &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;threshold=</span><span class="si">{</span><span class="n">threshold_val</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_cell_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique cell IDs&quot;</span><span class="p">)</span>
+        
+    <span class="c1"># ALso save sample info</span>
+    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;samples&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">anchor_samples</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">results</span></div>
+
+
+
+<div class="viewcode-block" id="get_high_response_cells_train">
+<a class="viewcode-back" href="../../../api/s3cima.utils.plot.html#s3cima.utils.plot.get_high_response_cells_train">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_high_response_cells_train</span><span class="p">(</span>
+    <span class="n">meta</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">validation_splits</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">genes</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+    <span class="n">filter_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For each consensus filter cluster, compute the pooled filter response</span>
+<span class="sd">    for every non-background neighbourhood in the whole dataset, threshold at</span>
+<span class="sd">    the filter_threshold quantile, and return the cell IDs of the</span>
+<span class="sd">    high-responding neighbourhoods.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    meta             : list of dicts — &#39;meta&#39; key from extract_and_save_filters.</span>
+<span class="sd">                       Each dict must contain &#39;all_gene_weights&#39;, &#39;cluster&#39;,</span>
+<span class="sd">                       &#39;dominant_class&#39;. Optionally &#39;maxpool_percentage&#39;.</span>
+<span class="sd">    validation_splits: list of tuples — each tuple contains (train_subset, val_subset)</span>
+<span class="sd">    genes            : list of str — marker names in the same order as the</span>
+<span class="sd">                       intensity columns used during training.</span>
+<span class="sd">    filter_threshold : float in [0, 1) — responses below this quantile are</span>
+<span class="sd">                       discarded. Default 0.9 retains the top 10%.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict keyed by cluster_id, each value:</span>
+<span class="sd">        {</span>
+<span class="sd">          &quot;cell_ids&quot;                : list — unique cell IDs with high response,</span>
+<span class="sd">          &quot;responses&quot;               : np.array — activations of high neighbourhoods,</span>
+<span class="sd">          &quot;all_responses&quot;           : np.array — full activation distribution,</span>
+<span class="sd">          &quot;threshold_val&quot;           : float — quantile cutoff used,</span>
+<span class="sd">          &quot;n_neighbourhoods_above&quot;  : int,</span>
+<span class="sd">          &quot;n_cell_ids&quot;              : int,</span>
+<span class="sd">        }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">filter_threshold</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">,</span> \
+        <span class="s2">&quot;filter_threshold must be in [0, 1)&quot;</span>
+
+    <span class="c1"># Non-background samples</span>
+    <span class="n">anchor_intensities</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">anchor_cellids</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">anchor_labels</span> <span class="o">=</span> <span class="p">[]</span> 
+    <span class="n">anchor_samples</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Take only the first validation split</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="n">validation_splits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">dataset</span> <span class="ow">in</span> <span class="n">split</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;is_ctrl&quot;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+            <span class="n">anchor_intensities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;intensity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>  <span class="c1"># (ncell, nmark)</span>
+            <span class="n">anchor_cellids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;cellids&quot;</span><span class="p">])</span>                <span class="c1"># list of cell IDs</span>
+            <span class="n">anchor_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()))</span>
+            <span class="n">anchor_samples</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;pat&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">())</span>
+
+    <span class="n">anchor_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">anchor_labels</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;No non-background samples found. Check the is_ctrl flag.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">nmark</span> <span class="o">=</span> <span class="n">anchor_intensities</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span> <span class="o">!=</span> <span class="n">nmark</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;len(genes)=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">genes</span><span class="p">)</span><span class="si">}</span><span class="s2"> does not match intensity nmark=</span><span class="si">{</span><span class="n">nmark</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="s2">&quot;Ensure genes are provided in the same column order as the &quot;</span>
+            <span class="s2">&quot;intensity matrix used during training.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[INFO] Computing filter responses over &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">)</span><span class="si">}</span><span class="s2"> anchor neighbourhoods &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;across </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">meta</span><span class="p">)</span><span class="si">}</span><span class="s2"> filter clusters.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Response</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">meta</span><span class="p">:</span>
+        <span class="n">filter_diff</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;filter_diff&quot;</span><span class="p">]</span>
+        <span class="n">cluster_id</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;cluster&quot;</span><span class="p">]</span>
+        <span class="n">gene_weights</span> <span class="o">=</span> <span class="n">m</span><span class="p">[</span><span class="s2">&quot;all_gene_weights&quot;</span><span class="p">]</span>   <span class="c1"># {gene: weight}, |w|-ranked order</span>
+        <span class="n">mp</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;maxpool_percentage&quot;</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">ntop_frac</span> <span class="o">=</span> <span class="n">mp</span> <span class="o">/</span> <span class="mf">100.0</span>
+
+        <span class="c1"># Reconstruct conv_w in original marker column order</span>
+        <span class="n">conv_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">gene_weights</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">genes</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+        <span class="p">)</span>  <span class="c1"># (nmark,)</span>
+
+        <span class="c1"># Compute pooled ReLU activation for each neighbourhood</span>
+        <span class="n">responses</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">anchor_intensities</span><span class="p">):</span>
+            <span class="n">g</span>             <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span> <span class="o">@</span> <span class="n">conv_w</span><span class="p">)</span>       <span class="c1"># (ncell,)</span>
+            <span class="n">ntop</span>          <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">ntop_frac</span> <span class="o">*</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">responses</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">g</span><span class="p">)[</span><span class="o">-</span><span class="n">ntop</span><span class="p">:])</span>
+
+        <span class="c1"># Threshold</span>
+        <span class="n">threshold_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">responses</span><span class="p">,</span> <span class="n">filter_threshold</span><span class="p">))</span>
+        <span class="n">high_idx</span>      <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">responses</span> <span class="o">&gt;=</span> <span class="n">threshold_val</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Flatten and deduplicate cell IDs across high-responding neighbourhoods</span>
+        <span class="n">seen</span>            <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">unique_cell_ids</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">high_idx</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">cid</span> <span class="ow">in</span> <span class="n">anchor_cellids</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">cid</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+                    <span class="n">unique_cell_ids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cid</span><span class="p">)</span>
+
+        <span class="n">results</span><span class="p">[</span><span class="n">cluster_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;cell_ids&quot;</span><span class="p">:</span> <span class="n">unique_cell_ids</span><span class="p">,</span>
+            <span class="s2">&quot;responses&quot;</span><span class="p">:</span> <span class="n">responses</span><span class="p">[</span><span class="n">high_idx</span><span class="p">],</span>
+            <span class="s2">&quot;all_responses&quot;</span><span class="p">:</span> <span class="n">responses</span><span class="p">,</span>
+            <span class="s2">&quot;threshold_val&quot;</span><span class="p">:</span> <span class="n">threshold_val</span><span class="p">,</span>
+            <span class="s2">&quot;n_neighbourhoods_above&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">high_idx</span><span class="p">),</span>
+            <span class="s2">&quot;n_cell_ids&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_cell_ids</span><span class="p">),</span>
+            <span class="s2">&quot;filter_diff&quot;</span><span class="p">:</span> <span class="n">filter_diff</span>
+        <span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [Cluster </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">]  &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;threshold=</span><span class="si">{</span><span class="n">threshold_val</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> | &quot;</span>
+              <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unique_cell_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique cell IDs&quot;</span><span class="p">)</span>
+    
+    <span class="c1"># ALso save sample info</span>
+    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;samples&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">anchor_samples</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">results</span></div>
+
+        
+
+<div class="viewcode-block" id="save_stats">
+<a class="viewcode-back" href="../../../api/s3cima.utils.plot.html#s3cima.utils.plot.save_stats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">save_stats</span><span class="p">(</span>
+    <span class="n">high_response</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">cell_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">cell_type</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sample_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">condition_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">label_map</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
+    <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="p">,</span>
+    <span class="n">test</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For each consensus filter cluster:</span>
+<span class="sd">      - Per sample : spatial .png named by sample ID</span>
+<span class="sd">      - Per filter : all_selected_cells.csv — x, y, cell_id, cell_type,</span>
+<span class="sd">                     sample_id, label, cluster_id, filter_diff</span>
+<span class="sd">                     for every high-response cell across all samples</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    high_response : dict — output of get_high_response_cells, keyed by cluster_id.</span>
+<span class="sd">                    Must also contain a &quot;samples&quot; key listing valid sample IDs.</span>
+<span class="sd">    x, y          : np.ndarray — spatial coordinates</span>
+<span class="sd">    cell_id       : np.ndarray — unique cell identifiers</span>
+<span class="sd">    cell_type     : np.ndarray — cell type labels</span>
+<span class="sd">    sample_id     : np.ndarray — sample/image identifiers</span>
+<span class="sd">    condition_id  : np.ndarray - condition id</span>
+<span class="sd">    label_map     : dict       - map back from int to string label</span>
+<span class="sd">    save_path     : str        — root directory for outputs</span>
+<span class="sd">    test          : bool       — save under /test or /train subdirectory</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">save_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span> <span class="k">if</span> <span class="n">test</span> <span class="k">else</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">valid_samples</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">high_response</span><span class="p">[</span><span class="s2">&quot;samples&quot;</span><span class="p">])</span>
+    <span class="n">sample_mask</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">sample_id</span><span class="p">,</span> <span class="n">valid_samples</span><span class="p">)</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">sample_mask</span><span class="p">]</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">sample_mask</span><span class="p">]</span>
+    <span class="n">cell_id</span> <span class="o">=</span> <span class="n">cell_id</span><span class="p">[</span><span class="n">sample_mask</span><span class="p">]</span>
+    <span class="n">cell_type</span> <span class="o">=</span> <span class="n">cell_type</span><span class="p">[</span><span class="n">sample_mask</span><span class="p">]</span>
+    <span class="n">sample_id</span> <span class="o">=</span> <span class="n">sample_id</span><span class="p">[</span><span class="n">sample_mask</span><span class="p">]</span>
+
+    <span class="n">condition_id</span> <span class="o">=</span> <span class="p">[</span><span class="n">label_map</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">condition_id</span><span class="p">]</span>
+    <span class="n">condition_id</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">condition_id</span><span class="p">)</span>
+    <span class="n">condition_id</span> <span class="o">=</span> <span class="n">condition_id</span><span class="p">[</span><span class="n">sample_mask</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">cell_id</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No cells left after filtering by sample_ids.&quot;</span><span class="p">)</span>
+
+    <span class="n">hr</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">high_response</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;samples&quot;</span><span class="p">}</span>
+
+    <span class="c1"># For each filter </span>
+    <span class="k">for</span> <span class="n">cluster_id</span><span class="p">,</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">hr</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">high_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">res</span><span class="p">[</span><span class="s2">&quot;cell_ids&quot;</span><span class="p">])</span>
+        <span class="n">filter_diff</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;filter_diff&quot;</span><span class="p">]</span>
+
+        <span class="n">cluster_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;filter_</span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">cluster_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="n">all_selected_rows</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">sid</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">sample_id</span><span class="p">):</span>
+            <span class="n">smask</span> <span class="o">=</span> <span class="n">sample_id</span> <span class="o">==</span> <span class="n">sid</span>
+
+            <span class="n">sx</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">smask</span><span class="p">]</span>
+            <span class="n">sy</span>  <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">smask</span><span class="p">]</span>
+            <span class="n">s_cell_id</span>  <span class="o">=</span> <span class="n">cell_id</span><span class="p">[</span><span class="n">smask</span><span class="p">]</span>
+            <span class="n">s_cell_type</span> <span class="o">=</span> <span class="n">cell_type</span><span class="p">[</span><span class="n">smask</span><span class="p">]</span>
+            <span class="n">s_condition_id</span>  <span class="o">=</span> <span class="n">condition_id</span><span class="p">[</span><span class="n">smask</span><span class="p">]</span>
+
+            <span class="n">sel_mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">s_cell_id</span><span class="p">,</span> <span class="nb">list</span><span class="p">(</span><span class="n">high_ids</span><span class="p">))</span>
+            <span class="n">n_selected</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sel_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+            <span class="n">n_total</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">smask</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">n_selected</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2"> | Sample </span><span class="si">{</span><span class="n">sid</span><span class="si">}</span><span class="s2">] &quot;</span>
+                      <span class="sa">f</span><span class="s2">&quot;0 selected cells — skipping.&quot;</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Make the spatial.png</span>
+            <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">150</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                <span class="n">sx</span><span class="p">[</span><span class="o">~</span><span class="n">sel_mask</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="o">~</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="n">c</span><span class="o">=</span><span class="s2">&quot;#b0b0b0&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">rasterized</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
+                <span class="n">sx</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span> <span class="n">sy</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="n">c</span><span class="o">=</span><span class="s2">&quot;#8b0000&quot;</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">rasterized</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Selected (n=</span><span class="si">{</span><span class="n">n_selected</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2"> | Sample </span><span class="si">{</span><span class="n">sid</span><span class="si">}</span><span class="s2"> | &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_selected</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_total</span><span class="si">}</span><span class="s2"> cells | &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;filter_diff=</span><span class="si">{</span><span class="n">filter_diff</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">fontsize</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">markerscale</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span> <span class="n">framealpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">)</span>
+            <span class="n">ax</span><span class="o">.</span><span class="n">set_aspect</span><span class="p">(</span><span class="s2">&quot;equal&quot;</span><span class="p">)</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+            <span class="n">fig</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cluster_dir</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;spatial_plot_sample_</span><span class="si">{</span><span class="n">sid</span><span class="si">}</span><span class="s2">.png&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">close</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+
+            <span class="c1"># Get selected</span>
+            <span class="n">all_selected_rows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+                <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="n">sx</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="n">sy</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="s2">&quot;cell_id&quot;</span><span class="p">:</span> <span class="n">s_cell_id</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="s2">&quot;cell_type&quot;</span><span class="p">:</span> <span class="n">s_cell_type</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="s2">&quot;condition_id&quot;</span><span class="p">:</span> <span class="n">s_condition_id</span><span class="p">[</span><span class="n">sel_mask</span><span class="p">],</span>
+                <span class="s2">&quot;sample_id&quot;</span><span class="p">:</span> <span class="n">sid</span><span class="p">,</span>
+            <span class="p">}))</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2"> | Sample </span><span class="si">{</span><span class="n">sid</span><span class="si">}</span><span class="s2">] &quot;</span>
+                  <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">n_selected</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_total</span><span class="si">}</span><span class="s2"> cells selected.&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Per-filtert csv</span>
+        <span class="k">if</span> <span class="n">all_selected_rows</span><span class="p">:</span>
+            <span class="n">all_selected_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_selected_rows</span><span class="p">,</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">all_selected_df</span><span class="p">[</span><span class="s2">&quot;cluster_id&quot;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">cluster_id</span>
+            <span class="n">all_selected_df</span><span class="p">[</span><span class="s2">&quot;filter_diff&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">filter_diff</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+
+            <span class="n">out_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cluster_dir</span><span class="p">,</span> <span class="s2">&quot;all_selected_cells.csv&quot;</span><span class="p">)</span>
+            <span class="n">all_selected_df</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">all_selected_df</span><span class="p">)</span><span class="si">}</span><span class="s2"> cells across &quot;</span>
+                  <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">all_selected_df</span><span class="p">[</span><span class="s1">&#39;sample_id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">nunique</span><span class="p">()</span><span class="si">}</span><span class="s2"> samples → </span><span class="si">{</span><span class="n">out_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[Filter </span><span class="si">{</span><span class="n">cluster_id</span><span class="si">}</span><span class="s2">] No selected cells in any sample.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">save_path</span></div>
+
+
+
+<div class="viewcode-block" id="enrichment_summary">
+<a class="viewcode-back" href="../../../api/s3cima.utils.plot.html#s3cima.utils.plot.enrichment_summary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">enrichment_summary</span><span class="p">(</span>
+    <span class="n">save_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">cell_type</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">sample_id</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">test</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">output_file</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    For every filter_ folder found under save_path:</span>
+<span class="sd">      1. Reads all_selected_cells.csv</span>
+<span class="sd">      2. Saves a matplotlib bar chart of cell type proportions in selected cells,</span>
+<span class="sd">         titled with the majority condition label</span>
+<span class="sd">      3. Computes per-sample log2 enrichment (selected vs background frequency)</span>
+<span class="sd">         using the full cell_type / sample_id arrays as background</span>
+<span class="sd">      4. Saves a single interactive Plotly HTML with one enrichment bar chart</span>
+<span class="sd">         per filter (mean log2 enrichment ± std across samples). Only cell types</span>
+<span class="sd">         with a positive mean enrichment are shown; depleted ones are omitted.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    save_path   : str         — root directory passed to save_high_response_stats</span>
+<span class="sd">    cell_type   : np.ndarray  — cell type labels for ALL cells in the dataset</span>
+<span class="sd">    sample_id   : np.ndarray  — sample IDs for ALL cells in the dataset</span>
+<span class="sd">    test        : bool        — labels the report as test or train data</span>
+<span class="sd">    output_file : str         — path for the HTML; defaults to</span>
+<span class="sd">                                &lt;save_path&gt;/enrichment_summary_report_&lt;prefix&gt;.html</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str — absolute path to the written HTML file</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span> <span class="k">if</span> <span class="n">test</span> <span class="k">else</span> <span class="s2">&quot;train&quot;</span>
+    <span class="k">if</span> <span class="n">output_file</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;enrichment_summary_report_</span><span class="si">{</span><span class="n">prefix</span><span class="si">}</span><span class="s2">.html&quot;</span><span class="p">)</span>
+
+    <span class="n">csv_files</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">save_path</span><span class="p">,</span> <span class="s2">&quot;filter_*&quot;</span><span class="p">,</span> <span class="s2">&quot;all_selected_cells.csv&quot;</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">csv_files</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No all_selected_cells.csv files found under: </span><span class="si">{</span><span class="n">save_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Background: per-sample cell type counts over the full dataset, in one pass.</span>
+    <span class="c1"># Labels are compared as strings because the CSVs are read back as strings.</span>
+    <span class="n">sample_id</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample_id</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sample_id&quot;</span><span class="p">)</span>
+    <span class="n">cell_type</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cell_type</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">str</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;cell_type&quot;</span><span class="p">)</span>
+    <span class="n">bg_counts</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">crosstab</span><span class="p">(</span><span class="n">sample_id</span><span class="p">,</span> <span class="n">cell_type</span><span class="p">)</span>  <span class="c1"># samples x cell types</span>
+    <span class="n">bg_totals</span> <span class="o">=</span> <span class="n">sample_id</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+
+    <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">csv_path</span> <span class="ow">in</span> <span class="n">csv_files</span><span class="p">:</span>
+        <span class="n">filter_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">csv_path</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span>
+            <span class="n">csv_path</span><span class="p">,</span>
+            <span class="n">usecols</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">_CSV_COLUMNS</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;sample_id&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="s2">&quot;cell_type&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">},</span>
+        <span class="p">)</span>
+
+        <span class="n">cluster_id</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;cluster_id&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">if</span> <span class="s2">&quot;cluster_id&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filter_dir</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;filter_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">filter_diff</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;filter_diff&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;filter_diff&quot;</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">columns</span>
+            <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">condition_label</span> <span class="o">=</span> <span class="n">_condition_label</span><span class="p">(</span><span class="n">df</span><span class="p">)</span>
+
+        <span class="n">_plot_proportions</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">filter_dir</span><span class="p">,</span> <span class="n">cluster_id</span><span class="p">,</span> <span class="n">condition_label</span><span class="p">,</span> <span class="n">filter_diff</span><span class="p">)</span>
+
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">_log2_enrichment_summary</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">bg_counts</span><span class="p">,</span> <span class="n">bg_totals</span><span class="p">)</span>
+        <span class="n">enriched</span> <span class="o">=</span> <span class="n">summary</span><span class="p">[</span><span class="n">summary</span><span class="p">[</span><span class="s2">&quot;mean_log2_enrichment&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">cluster_id</span><span class="p">,</span> <span class="n">filter_diff</span><span class="p">,</span> <span class="n">condition_label</span><span class="p">,</span> <span class="n">enriched</span><span class="p">))</span>
+
+    <span class="n">fig</span> <span class="o">=</span> <span class="n">_enrichment_figure</span><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">prefix</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+    <span class="n">output_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">output_file</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">output_file</span><span class="p">),</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fig</span><span class="o">.</span><span class="n">write_html</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="n">include_plotlyjs</span><span class="o">=</span><span class="s2">&quot;cdn&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Enrichment summary report written → </span><span class="si">{</span><span class="n">output_file</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_file</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Gabriel Duval.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

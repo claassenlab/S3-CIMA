@@ -1,0 +1,384 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preprocess - Model &mdash; S3-CIMA 23/10/2026 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=eadfcba0"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="prev" title="Results - Plotting" href="s3cima.utils.plot.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            S3-CIMA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../cima_example.html">Quickstart with S3-CIMA</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="s3cima.s3cima.html">Run S3-CIMA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.model.html">S3-CIMA Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.preprocess.html">Preprocess - CSV files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.datasets.html">Preprocess - Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.plot.html">Results - Plotting</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Preprocess - Model</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.EarlyStopping"><code class="docutils literal notranslate"><span class="pre">EarlyStopping</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#s3cima.utils.model.EarlyStopping.patience"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.patience</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#s3cima.utils.model.EarlyStopping.min_delta"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.min_delta</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#s3cima.utils.model.EarlyStopping.counter"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.counter</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#s3cima.utils.model.EarlyStopping.best_loss"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.best_loss</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#s3cima.utils.model.EarlyStopping.early_stop"><code class="docutils literal notranslate"><span class="pre">EarlyStopping.early_stop</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.fit"><code class="docutils literal notranslate"><span class="pre">fit()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.get_discriminative_filters"><code class="docutils literal notranslate"><span class="pre">get_discriminative_filters()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.set_seed"><code class="docutils literal notranslate"><span class="pre">set_seed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.test"><code class="docutils literal notranslate"><span class="pre">test()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.train"><code class="docutils literal notranslate"><span class="pre">train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.model.validate"><code class="docutils literal notranslate"><span class="pre">validate()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">S3-CIMA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Reference</a></li>
+      <li class="breadcrumb-item active">Preprocess - Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/s3cima.utils.model.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="preprocess-model">
+<h1>Preprocess - Model<a class="headerlink" href="#preprocess-model" title="Link to this heading"></a></h1>
+<p id="module-s3cima.utils.model">Utils specific to the S3-CIMA Model classes.</p>
+<dl class="py class">
+<dt class="sig sig-object py" id="s3cima.utils.model.EarlyStopping">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">EarlyStopping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_delta</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#EarlyStopping"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.EarlyStopping" title="Link to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Early stopping to stop the training when the loss does not improve after
+certain epochs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>patience</strong> (<em>int</em>) -- Number of epochs to wait before stopping when loss is not improving.</p></li>
+<li><p><strong>min_delta</strong> (<em>float</em>) -- Minimum difference between new loss and old loss for new loss to be considered as an improvement.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="s3cima.utils.model.EarlyStopping.patience">
+<span class="sig-name descname"><span class="pre">patience</span></span><a class="headerlink" href="#s3cima.utils.model.EarlyStopping.patience" title="Link to this definition"></a></dt>
+<dd><p>Number of epochs to wait before stopping when loss is not improving.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="s3cima.utils.model.EarlyStopping.min_delta">
+<span class="sig-name descname"><span class="pre">min_delta</span></span><a class="headerlink" href="#s3cima.utils.model.EarlyStopping.min_delta" title="Link to this definition"></a></dt>
+<dd><p>Minimum difference between new loss and old loss for new loss to be considered as an improvement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="s3cima.utils.model.EarlyStopping.counter">
+<span class="sig-name descname"><span class="pre">counter</span></span><a class="headerlink" href="#s3cima.utils.model.EarlyStopping.counter" title="Link to this definition"></a></dt>
+<dd><p>Counts the number of epochs since the last improvement.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="s3cima.utils.model.EarlyStopping.best_loss">
+<span class="sig-name descname"><span class="pre">best_loss</span></span><a class="headerlink" href="#s3cima.utils.model.EarlyStopping.best_loss" title="Link to this definition"></a></dt>
+<dd><p>Best observed validation loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>float or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="s3cima.utils.model.EarlyStopping.early_stop">
+<span class="sig-name descname"><span class="pre">early_stop</span></span><a class="headerlink" href="#s3cima.utils.model.EarlyStopping.early_stop" title="Link to this definition"></a></dt>
+<dd><p>Flag indicating whether early stopping should be triggered.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.model.fit">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">fit</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dataset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="s3cima.utils.datasets.html#s3cima.utils.datasets.CIMADataset" title="s3cima.utils.datasets.CIMADataset"><span class="pre">CIMADataset</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncell</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_loc</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nruns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dendrogram_cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_val_folds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxpool_percentages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[1,</span> <span class="pre">5,</span> <span class="pre">10,</span> <span class="pre">20,</span> <span class="pre">50,</span> <span class="pre">100]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nfilter_selection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">[3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6,</span> <span class="pre">7,</span> <span class="pre">8,</span> <span class="pre">9,</span> <span class="pre">10]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.01</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stopping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">420</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#fit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.fit" title="Link to this definition"></a></dt>
+<dd><p>Fit an S3CIMA Model to a dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset</strong> (<a class="reference internal" href="s3cima.utils.datasets.html#s3cima.utils.datasets.CIMADataset" title="s3cima.utils.datasets.CIMADataset"><em>CIMADataset</em></a>) -- The dataset to fit the model on.</p></li>
+<li><p><strong>anchor</strong> (<em>str</em>) -- Cell type used as the anchor. Neighborhoods are built around cells
+of this type.</p></li>
+<li><p><strong>K</strong> (<em>int</em>) -- Number of nearest neighbors defining the spatial neighborhood around
+each anchor cell..</p></li>
+<li><p><strong>ncell</strong> (<em>int</em>) -- Number of cells in each multi-cell input set passed to the network.</p></li>
+<li><p><strong>genes</strong> (<em>list</em>) -- List of gene identifiers.</p></li>
+<li><p><strong>save_loc</strong> (<em>str</em>) -- Location to save results.</p></li>
+<li><p><strong>nruns</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of runs for the model (default is 5).</p></li>
+<li><p><strong>dendrogram_cutoff</strong> (<em>float</em><em>, </em><em>optional</em>) -- Cutoff for dendrogram clustering (default is 0.4).</p></li>
+<li><p><strong>n_val_folds</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of validation folds (default is 3).</p></li>
+<li><p><strong>maxpool_percentages</strong> (<em>list</em><em>, </em><em>optional</em>) -- List of maxpool percentages (default is [1, 5, 10, 20, 50, 100]).</p></li>
+<li><p><strong>nfilter_selection</strong> (<em>list</em><em>, </em><em>optional</em>) -- List of filter selections (default is [3, 4, 5, 6, 7, 8, 9, 10]).</p></li>
+<li><p><strong>dropout</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether to use dropout (default is True).</p></li>
+<li><p><strong>dropout_p</strong> (<em>float</em><em>, </em><em>optional</em>) -- Dropout probability (default is 0.5).</p></li>
+<li><p><strong>l2</strong> (<em>float</em><em>, </em><em>optional</em>) -- L2 regularization parameter (default is 1e-4).</p></li>
+<li><p><strong>background</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether to include background samples (default is False).</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) -- Batch size for training (default is 256).</p></li>
+<li><p><strong>lr</strong> (<em>float</em><em>, </em><em>optional</em>) -- Learning rate (default is 0.01).</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of training epochs (default is 20).</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>optional</em>) -- Number of workers for data loading (default is 8).</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether to use early stopping (default is True).</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>optional</em>) -- Patience for early stopping (default is 3).</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) -- Random seed (default is 12345).</p></li>
+<li><p><strong>classification</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether the task is classification (default is True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.model.get_discriminative_filters">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">get_discriminative_filters</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nruns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_subset</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Subset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_classes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nmarkers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">accur_thres</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.85</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dendrogram_cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_diff_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">result_folder</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">has_background</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">classification</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#get_discriminative_filters"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.get_discriminative_filters" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>After all runs are complete:</dt><dd><ol class="arabic simple">
+<li><p>Load each saved run's best model</p></li>
+<li><p>Evaluate validation accuracy</p></li>
+<li><p>Collect filter weight vectors from runs passing accur_thres
+(minimum 3 models always kept regardless of threshold)</p></li>
+<li><p>Concatenate all passing filter weights into one matrix</p></li>
+<li><p>Cluster via hierarchical clustering (cosine distance)</p></li>
+<li><p>Select one consensus filter per cluster (medoid) and calculate filter diff</p></li>
+</ol>
+</dd>
+</dl>
+<p>Filter weights shape per run: (nfilter, nmark)
+Only filters connected to non-control classes are retained
+(i.e. output weight to ctrl class [n_classes-1] is NOT the dominant connection).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>save_model</strong> (<em>str</em>) -- Path to the directory containing saved model checkpoints.</p></li>
+<li><p><strong>nruns</strong> (<em>int</em>) -- Number of runs to consider.</p></li>
+<li><p><strong>validation_subset</strong> (<em>Subset</em>) -- Validation dataset subset.</p></li>
+<li><p><strong>loss_fn</strong> (<em>callable</em>) -- Loss function used for evaluation.</p></li>
+<li><p><strong>n_classes</strong> (<em>int</em>) -- Number of classes in the classification task.</p></li>
+<li><p><strong>nmarkers</strong> (<em>int</em>) -- Number of markers (features) per sample.</p></li>
+<li><p><strong>lr</strong> (<em>float</em>) -- Learning rate used during training.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) -- Batch size for DataLoader.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em>) -- Number of workers for DataLoader.</p></li>
+<li><p><strong>log_file</strong> (<em>str</em>) -- Path to the log file.</p></li>
+<li><p><strong>device</strong> (<em>str</em>) -- Device to run the model on (e.g., &quot;cpu&quot; or &quot;cuda&quot;).</p></li>
+<li><p><strong>accur_thres</strong> (<em>float</em><em>, </em><em>optional</em>) -- Accuracy threshold for selecting runs (default is 0.85).</p></li>
+<li><p><strong>dendrogram_cutoff</strong> (<em>float</em><em>, </em><em>optional</em>) -- Cutoff for hierarchical clustering dendrogram (default is 0.4).</p></li>
+<li><p><strong>filter_diff_threshold</strong> (<em>float</em><em>, </em><em>optional</em>) -- Threshold for filter difference (default is 0.0).</p></li>
+<li><p><strong>result_folder</strong> (<em>str</em><em>, </em><em>optional</em>) -- Folder to save results (default is None).</p></li>
+<li><p><strong>genes</strong> (<em>list</em><em>, </em><em>optional</em>) -- List of gene names corresponding to markers (default is None).</p></li>
+<li><p><strong>has_background</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether the dataset includes background/control samples (default is True).</p></li>
+<li><p><strong>classification</strong> (<em>bool</em><em>, </em><em>optional</em>) -- Whether the task is classification (default is True).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>consensus_filters</strong> (<em>torch.Tensor</em>) -- Tensor containing the consensus filters selected from the clustering.</p></li>
+<li><p><strong>filter_diff</strong> (<em>torch.Tensor</em>) -- Tensor containing the differences between the selected filters and the cluster medoids.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.model.set_seed">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">set_seed</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">42</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#set_seed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.set_seed" title="Link to this definition"></a></dt>
+<dd><p>Fix the seeds for reproductible runs during training</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>seed</strong> (<em>int</em>) -- The seed value to set for all random number generators.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.model.test">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figure_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.test" title="Link to this definition"></a></dt>
+<dd><p>Test function for the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module descendant</em>) -- Model through which training data is passed</p></li>
+<li><p><strong>test_loader</strong> (<em>DataLoader</em>) -- Test data with features and labels</p></li>
+<li><p><strong>loss_fn</strong> (<em>function</em>) -- Method of loss calculation</p></li>
+<li><p><strong>figure_path</strong> (<em>str</em>) -- Path to save figures generated during testing.</p></li>
+<li><p><strong>epoch</strong> (<em>int</em>) -- Number of passes through the network</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>epoch_loss</strong> (<em>float</em>) -- Average loss over the test epoch.</p></li>
+<li><p><strong>all_pred_classes</strong> (<em>list</em>) -- List of predicted class labels for all test samples.</p></li>
+<li><p><strong>all_true_classes</strong> (<em>list</em>) -- List of true class labels for all test samples.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.model.train">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">train_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.train" title="Link to this definition"></a></dt>
+<dd><p>Train function for the model. To evaluate the training, multiple different
+measures are used: Balanced Accuracy, Precision, Recall.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module descendant</em>) -- Model through which training data is passed</p></li>
+<li><p><strong>train_loader</strong> (<em>DataLoader</em>) -- Training data with features and labels</p></li>
+<li><p><strong>loss_fn</strong> (<em>function</em>) -- Method of loss calculation</p></li>
+<li><p><strong>optimizer</strong> (<em>function</em><em> (</em><em>taken using torch.optim</em><em>)</em>) -- Optimisation method</p></li>
+<li><p><strong>epoch</strong> (<em>int</em>) -- Number of passes through the network</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>epoch_loss</strong> (<em>float</em>) -- Average loss over the epoch.</p></li>
+<li><p><strong>ba</strong> (<em>float</em>) -- Balanced accuracy over the epoch.</p></li>
+<li><p><strong>f1</strong> (<em>float</em>) -- Macro F1-score over the epoch.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.model.validate">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.model.</span></span><span class="sig-name descname"><span class="pre">validate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_loader</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/model.html#validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.model.validate" title="Link to this definition"></a></dt>
+<dd><p>Validation function for the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module descendant</em>) -- Model through which training data is passed</p></li>
+<li><p><strong>val_loader</strong> (<em>DataLoader</em>) -- Validation data with features and labels</p></li>
+<li><p><strong>loss_fn</strong> (<em>function</em>) -- Method of loss calculation</p></li>
+<li><p><strong>optimizer</strong> (<em>function</em><em> (</em><em>taken using torch.optim</em><em>)</em>) -- Optimisation method</p></li>
+<li><p><strong>epoch</strong> (<em>int</em>) -- Number of passes through the network</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>epoch_loss</strong> (<em>float</em>) -- Average loss over the validation epoch.</p></li>
+<li><p><strong>ba</strong> (<em>float</em>) -- Balanced accuracy over the validation epoch.</p></li>
+<li><p><strong>f1</strong> (<em>float</em>) -- Macro F1-score over the validation epoch.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="s3cima.utils.plot.html" class="btn btn-neutral float-left" title="Results - Plotting" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Gabriel Duval.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

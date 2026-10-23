@@ -1,0 +1,282 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Results - Plotting &mdash; S3-CIMA 23/10/2026 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=eadfcba0"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Preprocess - Model" href="s3cima.utils.model.html" />
+    <link rel="prev" title="Preprocess - Datasets" href="s3cima.utils.datasets.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            S3-CIMA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../cima_example.html">Quickstart with S3-CIMA</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="s3cima.s3cima.html">Run S3-CIMA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.model.html">S3-CIMA Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.preprocess.html">Preprocess - CSV files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.datasets.html">Preprocess - Datasets</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Results - Plotting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.plot.enrichment_summary"><code class="docutils literal notranslate"><span class="pre">enrichment_summary()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.plot.get_high_response_cells_test"><code class="docutils literal notranslate"><span class="pre">get_high_response_cells_test()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.plot.get_high_response_cells_train"><code class="docutils literal notranslate"><span class="pre">get_high_response_cells_train()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.plot.plot_filter_weights"><code class="docutils literal notranslate"><span class="pre">plot_filter_weights()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.utils.plot.save_stats"><code class="docutils literal notranslate"><span class="pre">save_stats()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.model.html">Preprocess - Model</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">S3-CIMA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Reference</a></li>
+      <li class="breadcrumb-item active">Results - Plotting</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/s3cima.utils.plot.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="results-plotting">
+<h1>Results - Plotting<a class="headerlink" href="#results-plotting" title="Link to this heading"></a></h1>
+<p id="module-s3cima.utils.plot">Plotting functions to for the S3-CIMA model outputs</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.plot.enrichment_summary">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.plot.</span></span><span class="sig-name descname"><span class="pre">enrichment_summary</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_file</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference internal" href="../_modules/s3cima/utils/plot.html#enrichment_summary"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.plot.enrichment_summary" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>For every <a href="#id1"><span class="problematic" id="id2">filter_</span></a> folder found under save_path:</dt><dd><ol class="arabic simple">
+<li><p>Reads all_selected_cells.csv</p></li>
+<li><p>Saves a matplotlib bar chart of cell type proportions in selected cells,
+titled with the majority condition label</p></li>
+<li><p>Computes per-sample log2 enrichment (selected vs background frequency)
+using the full cell_type / sample_id arrays as background</p></li>
+<li><p>Saves a single interactive Plotly HTML with one enrichment bar chart
+per filter (mean log2 enrichment ± std across samples). Only cell types
+with a positive mean enrichment are shown; depleted ones are omitted.</p></li>
+</ol>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>save_path</strong> (<em>str         — root directory passed to save_high_response_stats</em>)</p></li>
+<li><p><strong>cell_type</strong> (<em>np.ndarray  — cell type labels for ALL cells in the dataset</em>)</p></li>
+<li><p><strong>sample_id</strong> (<em>np.ndarray  — sample IDs for ALL cells in the dataset</em>)</p></li>
+<li><p><strong>test</strong> (<em>bool        — labels the report as test</em><em> or </em><em>train data</em>)</p></li>
+<li><p><strong>output_file</strong> (<em>str         — path for the HTML; defaults to</em>) -- &lt;save_path&gt;/enrichment_summary_report_&lt;prefix&gt;.html</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>str — absolute path to the written HTML file</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.plot.get_high_response_cells_test">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.plot.</span></span><span class="sig-name descname"><span class="pre">get_high_response_cells_test</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataset</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/s3cima/utils/plot.html#get_high_response_cells_test"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.plot.get_high_response_cells_test" title="Link to this definition"></a></dt>
+<dd><p>For each consensus filter cluster, compute the pooled filter response
+for every non-background neighbourhood in the test dataset, threshold at
+the filter_threshold quantile, and return the cell IDs of the
+high-responding neighbourhoods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meta</strong> (<em>list</em><em> of </em><em>dicts — 'meta' key from extract_and_save_filters.</em>) -- Each dict must contain 'all_gene_weights', 'cluster',
+'dominant_class'. Optionally 'maxpool_percentage'.</p></li>
+<li><p><strong>dataset</strong> (<em>NormalizedCIMASubset — samples must be</em>) -- dicts with keys 'intensity', 'is_ctrl', 'cellids'.</p></li>
+<li><p><strong>genes</strong> (<em>list</em><em> of </em><em>str — marker names in the same order as the</em>) -- intensity columns used during training.</p></li>
+<li><p><strong>filter_threshold</strong> (<em>float in</em><em> [</em><em>0</em><em>, </em><em>1</em><em>) </em><em>— responses below this quantile are</em>) -- discarded. Default 0.9 retains the top 10%.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>{</dt><dd><p>&quot;cell_ids&quot;                : list — unique cell IDs with high response,
+&quot;responses&quot;               : np.array — activations of high neighbourhoods,
+&quot;all_responses&quot;           : np.array — full activation distribution,
+&quot;threshold_val&quot;           : float — quantile cutoff used,
+&quot;n_neighbourhoods_above&quot;  : int,
+&quot;n_cell_ids&quot;              : int,</p>
+</dd>
+</dl>
+<p>}</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict keyed by cluster_id, each value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.plot.get_high_response_cells_train">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.plot.</span></span><span class="sig-name descname"><span class="pre">get_high_response_cells_train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">validation_splits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference internal" href="../_modules/s3cima/utils/plot.html#get_high_response_cells_train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.plot.get_high_response_cells_train" title="Link to this definition"></a></dt>
+<dd><p>For each consensus filter cluster, compute the pooled filter response
+for every non-background neighbourhood in the whole dataset, threshold at
+the filter_threshold quantile, and return the cell IDs of the
+high-responding neighbourhoods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meta</strong> (<em>list</em><em> of </em><em>dicts — 'meta' key from extract_and_save_filters.</em>) -- Each dict must contain 'all_gene_weights', 'cluster',
+'dominant_class'. Optionally 'maxpool_percentage'.</p></li>
+<li><p><strong>validation_splits</strong> (<em>list</em><em> of </em><em>tuples — each tuple contains</em><em> (</em><em>train_subset</em><em>, </em><em>val_subset</em><em>)</em>)</p></li>
+<li><p><strong>genes</strong> (<em>list</em><em> of </em><em>str — marker names in the same order as the</em>) -- intensity columns used during training.</p></li>
+<li><p><strong>filter_threshold</strong> (<em>float in</em><em> [</em><em>0</em><em>, </em><em>1</em><em>) </em><em>— responses below this quantile are</em>) -- discarded. Default 0.9 retains the top 10%.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><dl class="simple">
+<dt>{</dt><dd><p>&quot;cell_ids&quot;                : list — unique cell IDs with high response,
+&quot;responses&quot;               : np.array — activations of high neighbourhoods,
+&quot;all_responses&quot;           : np.array — full activation distribution,
+&quot;threshold_val&quot;           : float — quantile cutoff used,
+&quot;n_neighbourhoods_above&quot;  : int,
+&quot;n_cell_ids&quot;              : int,</p>
+</dd>
+</dl>
+<p>}</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict keyed by cluster_id, each value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.plot.plot_filter_weights">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.plot.</span></span><span class="sig-name descname"><span class="pre">plot_filter_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">meta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'consensus_filter_weights'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_n_genes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/plot.html#plot_filter_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.plot.plot_filter_weights" title="Link to this definition"></a></dt>
+<dd><p>Plot a heatmap of gene weights across all filter clusters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>meta</strong> (<em>list</em><em> of </em><em>dicts — the 'meta' key from extract_and_save_filters output.</em>) -- Each dict must contain 'cluster', 'dominant_class', 'all_gene_weights'.</p></li>
+<li><p><strong>save_path</strong> (<em>str  — directory to save the HTML</em><em> (</em><em>and PNG</em><em>) </em><em>file.</em>)</p></li>
+<li><p><strong>filename</strong> (<em>str  — base filename without extension.</em>)</p></li>
+<li><p><strong>show</strong> (<em>bool — if True</em><em>, </em><em>calls fig.show</em><em>(</em><em>) </em><em>to display in browser/notebook.</em>)</p></li>
+<li><p><strong>top_n_genes</strong> (<em>int  — if provided</em><em>, </em><em>only plot the top N genes ranked by max</em>) -- absolute weight across all clusters. Useful when nmarkers is large.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.utils.plot.save_stats">
+<span class="sig-prename descclassname"><span class="pre">s3cima.utils.plot.</span></span><span class="sig-name descname"><span class="pre">save_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">high_response</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">condition_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/utils/plot.html#save_stats"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.utils.plot.save_stats" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>For each consensus filter cluster:</dt><dd><ul class="simple">
+<li><p>Per sample : spatial .png named by sample ID</p></li>
+<li><dl class="simple">
+<dt>Per filter<span class="classifier">all_selected_cells.csv — x, y, cell_id, cell_type,</span></dt><dd><p>sample_id, label, cluster_id, filter_diff
+for every high-response cell across all samples</p>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>high_response</strong> (<em>dict — output</em><em> of </em><em>get_high_response_cells</em><em>, </em><em>keyed by cluster_id.</em>) -- Must also contain a &quot;samples&quot; key listing valid sample IDs.</p></li>
+<li><p><strong>x</strong> (<em>np.ndarray — spatial coordinates</em>)</p></li>
+<li><p><strong>y</strong> (<em>np.ndarray — spatial coordinates</em>)</p></li>
+<li><p><strong>cell_id</strong> (<em>np.ndarray — unique cell identifiers</em>)</p></li>
+<li><p><strong>cell_type</strong> (<em>np.ndarray — cell type labels</em>)</p></li>
+<li><p><strong>sample_id</strong> (<em>np.ndarray — sample/image identifiers</em>)</p></li>
+<li><p><strong>condition_id</strong> (<em>np.ndarray - condition id</em>)</p></li>
+<li><p><strong>label_map</strong> (<em>dict       - map back from int to string label</em>)</p></li>
+<li><p><strong>save_path</strong> (<em>str        — root directory for outputs</em>)</p></li>
+<li><p><strong>test</strong> (<em>bool       — save under /test</em><em> or </em><em>/train subdirectory</em>)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="s3cima.utils.datasets.html" class="btn btn-neutral float-left" title="Preprocess - Datasets" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="s3cima.utils.model.html" class="btn btn-neutral float-right" title="Preprocess - Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Gabriel Duval.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

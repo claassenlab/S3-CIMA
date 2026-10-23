@@ -1,0 +1,494 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>s3cima.utils.datasets &mdash; S3-CIMA 23/10/2026 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=eadfcba0"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            S3-CIMA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">S3-CIMA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">s3cima.utils.datasets</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for s3cima.utils.datasets</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Utils specific to the S3-CIMA Dataset classes.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1"># Imports</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torch.utils.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">Subset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.spatial</span><span class="w"> </span><span class="kn">import</span> <span class="n">cKDTree</span>
+
+
+<span class="c1"># Functions ---------------------------------------------------------------</span>
+
+<span class="c1"># TODO add a calculation of an outlier score - this will help once we</span>
+<span class="c1"># implement the outlier sampling.</span>
+
+<div class="viewcode-block" id="CIMADataset">
+<a class="viewcode-back" href="../../../api/s3cima.utils.datasets.html#s3cima.utils.datasets.CIMADataset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CIMADataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    One sample is one anchor cell + its K nearest neighbours&#39; intensities.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    anchor      : str   — anchor cell type label</span>
+<span class="sd">    image       : (N,) array of image IDs</span>
+<span class="sd">    pat         : (N,) array of patient IDs</span>
+<span class="sd">    intensity   : (N, M) float array of marker intensities</span>
+<span class="sd">    ct          : (N,) array of cell type strings</span>
+<span class="sd">    x, y        : (N,) float arrays of spatial coordinates</span>
+<span class="sd">    cellid      : (N,) array of cell IDs</span>
+<span class="sd">    K           : int  — number of nearest neighbours</span>
+<span class="sd">    ncell       : int - number of K neighbours to subsample (CellCNN input)</span>
+<span class="sd">    label       : (N,) array of labels</span>
+<span class="sd">    random_ctrl : bool — if True, expose random-anchor controls as well</span>
+<span class="sd">    task        : str  — &quot;classification&quot; or &quot;regression&quot;, inferred from label type</span>
+<span class="sd">    seed        : int  — random seed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">anchor</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">image</span><span class="p">,</span> <span class="n">pat</span><span class="p">,</span> <span class="n">intensity</span><span class="p">,</span> <span class="n">ct</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cellid</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span>
+        <span class="n">K</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">ncell</span> <span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">random_ctrl</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">task</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">420</span><span class="p">,</span>
+        <span class="n">bg_sets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># Task input check</span>
+        <span class="k">assert</span> <span class="n">task</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span> <span class="s2">&quot;regression&quot;</span><span class="p">),</span> \
+            <span class="s2">&quot;task must be &#39;classification&#39; or &#39;regression&#39;&quot;</span>
+        
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ncell</span> <span class="o">=</span> <span class="n">ncell</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">label</span> <span class="o">=</span> <span class="n">label</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bg_sets</span> <span class="o">=</span> <span class="n">bg_sets</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_ctrl</span> <span class="o">=</span> <span class="n">random_ctrl</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">anchor</span> <span class="o">==</span> <span class="s2">&quot;BG&quot;</span><span class="p">:</span>
+            <span class="n">random_ctrl</span> <span class="o">=</span> <span class="kc">False</span> <span class="c1"># Overrides for BG</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">random_ctrl</span> <span class="o">=</span> <span class="n">random_ctrl</span>
+
+        <span class="c1"># resolve label type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">=</span> <span class="n">task</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selected task : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># --- collect anchor indices per image, build KD-trees once --------</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">samples</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Set control label</span>
+        <span class="k">if</span> <span class="n">random_ctrl</span><span class="p">:</span>
+            <span class="n">ctrl_label</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">label</span><span class="p">))</span>
+            <span class="n">encoded_ctrl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_encode_label</span><span class="p">(</span><span class="n">ctrl_label</span><span class="p">)</span>
+
+
+        <span class="k">for</span> <span class="n">img_id</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">image</span><span class="p">):</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">image</span> <span class="o">==</span> <span class="n">img_id</span>
+            <span class="n">ix</span>   <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="n">img_x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+            <span class="n">img_y</span> <span class="o">=</span> <span class="n">y</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+            <span class="n">img_int</span> <span class="o">=</span> <span class="n">intensity</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+            <span class="n">img_ct</span> <span class="o">=</span> <span class="n">ct</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+            <span class="n">img_cellid</span> <span class="o">=</span> <span class="n">cellid</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+            <span class="n">img_pat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">pat</span><span class="p">[</span><span class="n">ix</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">img_labels</span> <span class="o">=</span> <span class="n">label</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span>
+
+            <span class="n">coords</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">img_x</span><span class="p">,</span> <span class="n">img_y</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">tree</span>   <span class="o">=</span> <span class="n">cKDTree</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">anchor</span> <span class="o">==</span> <span class="s2">&quot;BG&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">img_labels</span><span class="p">))</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">anchor_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">img_ct</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bg_sets</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">img_ct</span><span class="p">)),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">unique_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">img_labels</span><span class="p">)</span>
+                    <span class="n">quota</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bg_sets</span> <span class="o">//</span> <span class="nb">len</span><span class="p">(</span><span class="n">unique_labels</span><span class="p">))</span>
+                    <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">lbl</span> <span class="ow">in</span> <span class="n">unique_labels</span><span class="p">:</span>
+                        <span class="n">lbl_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">img_labels</span> <span class="o">==</span> <span class="n">lbl</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">lbl_idx</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">quota</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lbl_idx</span><span class="p">)),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                        <span class="p">)</span>
+                    <span class="n">anchor_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">anchor_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">img_ct</span> <span class="o">==</span> <span class="n">anchor</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># Selecting the actual anchor cells</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">anchor_idx</span><span class="p">:</span>
+                <span class="n">knn_int</span><span class="p">,</span> <span class="n">knn_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">img_int</span><span class="p">,</span> <span class="n">img_cellid</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                    <span class="s2">&quot;intensity&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">knn_int</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="s2">&quot;cellids&quot;</span><span class="p">:</span>   <span class="n">knn_ids</span><span class="p">,</span>
+                    <span class="s2">&quot;pat&quot;</span><span class="p">:</span>       <span class="n">img_pat</span><span class="p">,</span>
+                    <span class="s2">&quot;label&quot;</span><span class="p">:</span>     <span class="bp">self</span><span class="o">.</span><span class="n">_encode_label</span><span class="p">(</span><span class="n">img_labels</span><span class="p">[</span><span class="n">idx</span><span class="p">]),</span>
+                    <span class="s2">&quot;task&quot;</span><span class="p">:</span>      <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">,</span>
+                    <span class="s2">&quot;is_ctrl&quot;</span><span class="p">:</span>   <span class="kc">False</span><span class="p">,</span>
+                <span class="p">})</span>
+            <span class="c1"># Background control cells (aka non-anchor cells)</span>
+            <span class="k">if</span> <span class="n">random_ctrl</span><span class="p">:</span>
+
+                <span class="n">all_idx</span>    <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">img_ct</span><span class="p">))</span>
+                <span class="n">non_anchor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">all_idx</span><span class="p">,</span> <span class="n">anchor_idx</span><span class="p">)</span>
+                <span class="n">ctrl_idx</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                    <span class="n">non_anchor</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">anchor_idx</span><span class="p">),</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>   
+
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">ctrl_idx</span><span class="p">:</span>
+                    <span class="n">knn_int</span><span class="p">,</span> <span class="n">knn_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_query</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">img_int</span><span class="p">,</span> <span class="n">img_cellid</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
+                        <span class="s2">&quot;intensity&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">knn_int</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                        <span class="s2">&quot;cellids&quot;</span><span class="p">:</span>   <span class="n">knn_ids</span><span class="p">,</span>
+                        <span class="s2">&quot;pat&quot;</span><span class="p">:</span>       <span class="n">img_pat</span><span class="p">,</span>
+                        <span class="s2">&quot;label&quot;</span><span class="p">:</span>     <span class="n">encoded_ctrl</span><span class="p">,</span>
+                        <span class="s2">&quot;task&quot;</span><span class="p">:</span>      <span class="bp">self</span><span class="o">.</span><span class="n">task</span><span class="p">,</span>
+                        <span class="s2">&quot;is_ctrl&quot;</span><span class="p">:</span>   <span class="kc">True</span><span class="p">,</span>
+                    <span class="p">})</span>
+                
+
+
+    <span class="c1"># label query and encoding</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_encode_label</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">task</span> <span class="o">==</span> <span class="s2">&quot;classification&quot;</span><span class="p">:</span>
+            <span class="c1"># expects val to already be an integer class index,</span>
+            <span class="c1"># or a string pre-mapped to an int by the user upstream</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">long</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_query</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">tree</span><span class="p">,</span> <span class="n">img_int</span><span class="p">,</span> <span class="n">img_cellid</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">nn_ix</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">k</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">nn_ix</span> <span class="o">=</span> <span class="n">nn_ix</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">ncell</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;ncell (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">ncell</span><span class="si">}</span><span class="s2">) must be &lt;= K (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="si">}</span><span class="s2">): &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;cannot sample more cells than the number of nearest neighbours retrieved.&quot;</span>
+    <span class="p">)</span>
+        <span class="n">nn_ix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">nn_ix</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">ncell</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">img_int</span><span class="p">[</span><span class="n">nn_ix</span><span class="p">],</span> <span class="n">img_cellid</span><span class="p">[</span><span class="n">nn_ix</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">)</span>
+    
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">samples</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="NormalizedCIMASubset">
+<a class="viewcode-back" href="../../../api/s3cima.utils.datasets.html#s3cima.utils.datasets.NormalizedCIMASubset">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NormalizedCIMASubset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subset</span><span class="p">:</span> <span class="n">Subset</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">std</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Wraps a Subset of CIMADataset to apply Z-score normalization.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        subset : Subset</span>
+<span class="sd">            A subset of CIMADataset to wrap.</span>
+<span class="sd">        mean : torch.Tensor</span>
+<span class="sd">            Marker-wise mean for Z-score normalization.</span>
+<span class="sd">        std : torch.Tensor</span>
+<span class="sd">            Marker-wise standard deviation for Z-score normalization.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subset</span> <span class="o">=</span> <span class="n">subset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">std</span> <span class="o">=</span> <span class="n">std</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="c1"># Retrieve the dictionary from the underlying CIMADataset</span>
+        <span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;intensity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">std</span>
+        
+        <span class="c1"># Return the updated dictionary</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;intensity&quot;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+            <span class="s2">&quot;label&quot;</span><span class="p">:</span>     <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;pat&quot;</span><span class="p">:</span>       <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;pat&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;task&quot;</span><span class="p">:</span>      <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;task&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;is_ctrl&quot;</span><span class="p">:</span>   <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;is_ctrl&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;cellids&quot;</span><span class="p">:</span>   <span class="n">sample</span><span class="p">[</span><span class="s2">&quot;cellids&quot;</span><span class="p">]</span>
+        <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="spatial_collate_fn">
+<a class="viewcode-back" href="../../../api/s3cima.utils.datasets.html#s3cima.utils.datasets.spatial_collate_fn">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">spatial_collate_fn</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Collate function for spatial data batches.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    batch : list of dict</span>
+<span class="sd">        List of samples, each being a dictionary containing keys:</span>
+<span class="sd">        &quot;intensity&quot;, &quot;cellids&quot;, &quot;pat&quot;, &quot;label&quot;, &quot;is_ctrl&quot;.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">        Collated batch with stacked intensities and lists for other fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;intensity&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;intensity&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]),</span>  <span class="c1"># (B, K, M)</span>
+        <span class="s2">&quot;cellids&quot;</span><span class="p">:</span>   <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;cellids&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">],</span>
+        <span class="s2">&quot;pat&quot;</span><span class="p">:</span>       <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;pat&quot;</span><span class="p">]</span>     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">],</span>
+        <span class="s2">&quot;label&quot;</span><span class="p">:</span>     <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span>     <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]),</span>  <span class="c1"># (B,) long or float32</span>
+        <span class="s2">&quot;is_ctrl&quot;</span><span class="p">:</span>   <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;is_ctrl&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">],</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="get_norm_stats">
+<a class="viewcode-back" href="../../../api/s3cima.utils.datasets.html#s3cima.utils.datasets.get_norm_stats">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_norm_stats</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">CIMADataset</span><span class="p">,</span> <span class="n">train_idx</span><span class="p">:</span> <span class="nb">list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates mean and std of intensities across all training samples.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataset : CIMADataset</span>
+<span class="sd">        The dataset containing the samples.</span>
+<span class="sd">    train_idx : list</span>
+<span class="sd">        List of indices corresponding to the training samples.</span>
+<span class="sd">    </span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mean : torch.Tensor</span>
+<span class="sd">        Marker-wise mean of the training intensities.</span>
+<span class="sd">    std : torch.Tensor</span>
+<span class="sd">        Marker-wise standard deviation of the training intensities.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Collect intensities from the specified training indices</span>
+    <span class="n">train_intensities</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">dataset</span><span class="o">.</span><span class="n">samples</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;intensity&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">train_idx</span><span class="p">])</span>
+    
+    <span class="c1"># Calculate marker-wise stats</span>
+    <span class="n">flat_intensities</span> <span class="o">=</span> <span class="n">train_intensities</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">train_intensities</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">flat_intensities</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">flat_intensities</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    
+    <span class="c1"># safety</span>
+    <span class="n">std</span><span class="p">[</span><span class="n">std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+    
+    <span class="k">return</span> <span class="n">mean</span><span class="p">,</span> <span class="n">std</span></div>
+
+
+
+<div class="viewcode-block" id="make_patient_stratified_splits">
+<a class="viewcode-back" href="../../../api/s3cima.utils.datasets.html#s3cima.utils.datasets.make_patient_stratified_splits">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_patient_stratified_splits</span><span class="p">(</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="n">CIMADataset</span><span class="p">,</span>
+    <span class="n">n_val_folds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">12345</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build patient-stratified train/val/test splits with no sample-level leakage,</span>
+<span class="sd">    stratified by patient-level label.</span>
+
+<span class="sd">    Strategy</span>
+<span class="sd">    --------</span>
+<span class="sd">    - 1 patient per label class is the held-out test set</span>
+<span class="sd">    - Remaining patients split into n_val_folds folds:</span>
+<span class="sd">        each fold uses 1 patient per label class as validation, rest as training</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataset     : CIMADataset</span>
+<span class="sd">    n_val_folds : int - number of train/val splits</span>
+<span class="sd">    seed        : int</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    test_subset : Subset</span>
+<span class="sd">    folds       : list of (train_Subset, val_Subset) tuples</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="c1"># derive patient level + labels</span>
+    <span class="c1"># exclude control samples (is_ctrl=True) to get the real label per patient</span>
+    <span class="n">pat_to_label</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">samples</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;is_ctrl&quot;</span><span class="p">]:</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;pat&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pat_to_label</span><span class="p">:</span>
+                <span class="n">pat_to_label</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>   <span class="c1"># scalar from tensor</span>
+
+    <span class="c1"># group patients by their label</span>
+    <span class="n">label_to_pats</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">lbl</span> <span class="ow">in</span> <span class="n">pat_to_label</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">label_to_pats</span><span class="p">[</span><span class="n">lbl</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">lbl</span> <span class="ow">in</span> <span class="n">label_to_pats</span><span class="p">:</span>
+        <span class="n">rng</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">label_to_pats</span><span class="p">[</span><span class="n">lbl</span><span class="p">])</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">label_to_pats</span><span class="p">[</span><span class="n">lbl</span><span class="p">])</span> <span class="o">&gt;=</span> <span class="n">n_val_folds</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Label &#39;</span><span class="si">{</span><span class="n">lbl</span><span class="si">}</span><span class="s2">&#39; has only </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">label_to_pats</span><span class="p">[</span><span class="n">lbl</span><span class="p">])</span><span class="si">}</span><span class="s2"> patients — &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;need at least n_val_folds+1=</span><span class="si">{</span><span class="n">n_val_folds</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># test hold-out</span>
+    <span class="n">test_pats</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">remaining_pats</span> <span class="o">=</span> <span class="p">{}</span>                        <span class="c1"># label --&gt; list of remaining patients</span>
+    <span class="k">for</span> <span class="n">lbl</span><span class="p">,</span> <span class="n">pats</span> <span class="ow">in</span> <span class="n">label_to_pats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">test_pats</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pats</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">remaining_pats</span><span class="p">[</span><span class="n">lbl</span><span class="p">]</span> <span class="o">=</span> <span class="n">pats</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="n">sample_pats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">s</span><span class="p">[</span><span class="s2">&quot;pat&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">samples</span><span class="p">])</span>
+    <span class="n">test_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_pats</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">test_pats</span><span class="p">]</span>
+    <span class="n">m_test</span><span class="p">,</span> <span class="n">s_test</span> <span class="o">=</span> <span class="n">get_norm_stats</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">test_idx</span><span class="p">)</span>
+    <span class="n">test_subset</span> <span class="o">=</span> <span class="n">NormalizedCIMASubset</span><span class="p">(</span><span class="n">Subset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">test_idx</span><span class="p">),</span> <span class="n">m_test</span><span class="p">,</span> <span class="n">s_test</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Test : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_idx</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">test_pats</span><span class="p">)</span><span class="si">}</span><span class="s2"> patients, &quot;</span>
+          <span class="sa">f</span><span class="s2">&quot;1 per label: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">label_to_pats</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+
+    <span class="c1"># build the splits</span>
+    <span class="n">folds</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Check input number of folds is correct</span>
+    <span class="n">min_pats_per_label</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pats</span><span class="p">)</span> <span class="k">for</span> <span class="n">pats</span> <span class="ow">in</span> <span class="n">remaining_pats</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="n">min_label</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">remaining_pats</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">remaining_pats</span><span class="p">[</span><span class="n">l</span><span class="p">]))</span>
+    <span class="k">assert</span> <span class="n">n_val_folds</span> <span class="o">&lt;=</span> <span class="n">min_pats_per_label</span><span class="p">,</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;n_val_folds=</span><span class="si">{</span><span class="n">n_val_folds</span><span class="si">}</span><span class="s2"> exceeds the number of remaining patients for label &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;&#39;</span><span class="si">{</span><span class="n">min_label</span><span class="si">}</span><span class="s2">&#39; (</span><span class="si">{</span><span class="n">min_pats_per_label</span><span class="si">}</span><span class="s2"> patients after test holdout). &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;Reduce n_val_folds to at most </span><span class="si">{</span><span class="n">min_pats_per_label</span><span class="si">}</span><span class="s2">.&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># TODO - improve the fold formation.</span>
+    <span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_val_folds</span><span class="p">):</span>
+        <span class="n">val_pats</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">train_pats</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">lbl</span><span class="p">,</span> <span class="n">pats</span> <span class="ow">in</span> <span class="n">remaining_pats</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">val_pat</span> <span class="o">=</span> <span class="n">pats</span><span class="p">[</span><span class="n">fold</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">pats</span><span class="p">)]</span>
+            <span class="n">val_pats</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">val_pat</span><span class="p">)</span>
+            <span class="n">train_pats</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">pats</span> <span class="k">if</span> <span class="n">p</span> <span class="o">!=</span> <span class="n">val_pat</span><span class="p">)</span>
+
+        <span class="n">val_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_pats</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">val_pats</span><span class="p">]</span>
+        <span class="n">train_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_pats</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">train_pats</span><span class="p">]</span>
+
+        <span class="n">m</span><span class="p">,</span> <span class="n">s</span> <span class="o">=</span> <span class="n">get_norm_stats</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">train_idx</span> <span class="o">+</span> <span class="n">val_idx</span><span class="p">)</span>
+
+        <span class="n">train_subset</span> <span class="o">=</span> <span class="n">NormalizedCIMASubset</span><span class="p">(</span><span class="n">Subset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">train_idx</span><span class="p">),</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="n">val_subset</span> <span class="o">=</span> <span class="n">NormalizedCIMASubset</span><span class="p">(</span><span class="n">Subset</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">val_idx</span><span class="p">),</span> <span class="n">m</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="n">folds</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">train_subset</span><span class="p">,</span> <span class="n">val_subset</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Fold </span><span class="si">{</span><span class="n">fold</span><span class="si">}</span><span class="s2">: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;train=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">train_idx</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">train_pats</span><span class="p">)</span><span class="si">}</span><span class="s2"> patients) | &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;val=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">val_idx</span><span class="p">)</span><span class="si">}</span><span class="s2"> samples (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">val_pats</span><span class="p">)</span><span class="si">}</span><span class="s2"> patients)&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">test_subset</span><span class="p">,</span> <span class="n">folds</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Gabriel Duval.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

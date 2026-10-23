@@ -186,6 +186,15 @@ class NormalizedCIMASubset(Dataset):
     def __init__(self, subset: Subset, mean: torch.Tensor, std: torch.Tensor):
         """
         Wraps a Subset of CIMADataset to apply Z-score normalization.
+
+        Parameters
+        ----------
+        subset : Subset
+            A subset of CIMADataset to wrap.
+        mean : torch.Tensor
+            Marker-wise mean for Z-score normalization.
+        std : torch.Tensor
+            Marker-wise standard deviation for Z-score normalization.
         """
         self.subset = subset
         self.mean = mean
@@ -212,6 +221,20 @@ class NormalizedCIMASubset(Dataset):
 
 
 def spatial_collate_fn(batch):
+    """
+    Collate function for spatial data batches.
+
+    Parameters
+    ----------
+    batch : list of dict
+        List of samples, each being a dictionary containing keys:
+        "intensity", "cellids", "pat", "label", "is_ctrl".
+
+    Returns
+    -------
+    dict
+        Collated batch with stacked intensities and lists for other fields.
+    """
     return {
         "intensity": torch.stack([s["intensity"] for s in batch]),  # (B, K, M)
         "cellids":   [s["cellids"] for s in batch],
@@ -224,6 +247,20 @@ def spatial_collate_fn(batch):
 def get_norm_stats(dataset: CIMADataset, train_idx: list):
     """
     Calculates mean and std of intensities across all training samples.
+
+    Parameters
+    ----------
+    dataset : CIMADataset
+        The dataset containing the samples.
+    train_idx : list
+        List of indices corresponding to the training samples.
+    
+    Returns
+    -------
+    mean : torch.Tensor
+        Marker-wise mean of the training intensities.
+    std : torch.Tensor
+        Marker-wise standard deviation of the training intensities.
     """
     # Collect intensities from the specified training indices
     train_intensities = torch.stack([dataset.samples[i]["intensity"] for i in train_idx])

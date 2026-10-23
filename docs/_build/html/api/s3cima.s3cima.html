@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Run S3-CIMA &mdash; S3-CIMA 23/10/2026 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=eadfcba0"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="S3-CIMA Model" href="s3cima.model.html" />
+    <link rel="prev" title="API Reference" href="../api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            S3-CIMA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../cima_example.html">Quickstart with S3-CIMA</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Reference</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Run S3-CIMA</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#s3cima.s3cima.run_s3cima"><code class="docutils literal notranslate"><span class="pre">run_s3cima()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.model.html">S3-CIMA Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.preprocess.html">Preprocess - CSV files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.datasets.html">Preprocess - Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.plot.html">Results - Plotting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s3cima.utils.model.html">Preprocess - Model</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">S3-CIMA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Reference</a></li>
+      <li class="breadcrumb-item active">Run S3-CIMA</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/api/s3cima.s3cima.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-s3cima.s3cima">
+<span id="run-s3-cima"></span><h1>Run S3-CIMA<a class="headerlink" href="#module-s3cima.s3cima" title="Link to this heading"></a></h1>
+<p>Main function to run S3-CIMA. See README for usage instructions</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="s3cima.s3cima.run_s3cima">
+<span class="sig-prename descclassname"><span class="pre">s3cima.s3cima.</span></span><span class="sig-name descname"><span class="pre">run_s3cima</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">anchor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">image_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">intensity</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_type</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">y</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cell_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">label_map</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">K</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ncell</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">30</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">random_ctrl</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'classification'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nruns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dendrogram_cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_val_folds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">maxpool_percentages</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(0.01,</span> <span class="pre">1,</span> <span class="pre">5,</span> <span class="pre">20,</span> <span class="pre">100)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nfilter_selection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">(3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6,</span> <span class="pre">7,</span> <span class="pre">8,</span> <span class="pre">9,</span> <span class="pre">10)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dropout_p</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bg_sets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">256</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_workers</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stopping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patience</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">420</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'.'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/s3cima/s3cima.html#run_s3cima"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#s3cima.s3cima.run_s3cima" title="Link to this definition"></a></dt>
+<dd><p>Run a full S3-CIMA analysis.</p>
+<p>Builds multi-cell input sets from the spatial neighborhoods of an anchor
+cell type, trains the S3-CIMA weakly supervised convolutional neural
+network to predict the sample-level outcome, and identifies the cell
+populations (filters) whose neighborhood composition is associated with
+that outcome. Filter weights, high-response cells, enrichment statistics
+and summary plots are written to disk for both the training and test sets.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>anchor</strong> (<em>str</em>) -- Cell type used as the anchor. Neighborhoods are built around cells
+of this type.</p></li>
+<li><p><strong>image_id</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Image (region of interest) identifier for each cell.</p></li>
+<li><p><strong>sample_id</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Sample or patient identifier for each cell. Outcome labels are
+defined at this level.</p></li>
+<li><p><strong>intensity</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>, </em><em>n_markers</em><em>)</em>) -- Marker expression intensities for each cell.</p></li>
+<li><p><strong>genes</strong> (<em>list</em><em> of </em><em>str</em>) -- Marker names, in the same order as the columns of <code class="docutils literal notranslate"><span class="pre">intensity</span></code>.</p></li>
+<li><p><strong>cell_type</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Cell type annotation for each cell.</p></li>
+<li><p><strong>x</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Spatial x coordinate of each cell.</p></li>
+<li><p><strong>y</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Spatial y coordinate of each cell.</p></li>
+<li><p><strong>cell_id</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Unique identifier for each cell.</p></li>
+<li><p><strong>label</strong> (<em>array-like</em><em> of </em><em>shape</em><em> (</em><em>n_cells</em><em>,</em><em>)</em>) -- Outcome label (e.g. disease condition) of the sample each cell
+belongs to.</p></li>
+<li><p><strong>label_map</strong> (<em>dict</em>) -- Mapping from label values to human-readable class names, used in
+plots and enrichment outputs.</p></li>
+<li><p><strong>K</strong> (<em>int</em><em>, </em><em>default=50</em>) -- Number of nearest neighbors defining the spatial neighborhood around
+each anchor cell.</p></li>
+<li><p><strong>ncell</strong> (<em>int</em><em>, </em><em>default=30</em>) -- Number of cells in each multi-cell input set passed to the network.</p></li>
+<li><p><strong>random_ctrl</strong> (<em>bool</em><em>, </em><em>default=True</em>) -- Whether to generate random background (control) cell sets to compare
+against the anchor neighborhoods.</p></li>
+<li><p><strong>task</strong> (<em>str</em><em>, </em><em>default=&quot;classification&quot;</em>) -- Learning task, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;classification&quot;</span></code> for categorical outcomes or
+regression for contiuous outcomes (&quot;regression&quot; mode not yet supported).</p></li>
+<li><p><strong>nruns</strong> (<em>int</em><em>, </em><em>default=5</em>) -- Number of independent training runs with different random
+initializations.</p></li>
+<li><p><strong>dendrogram_cutoff</strong> (<em>float</em><em>, </em><em>default=0.4</em>) -- Cutoff applied to the hierarchical clustering of learned filters
+across runs, used to group similar filters into consensus filters.</p></li>
+<li><p><strong>n_val_folds</strong> (<em>int</em><em>, </em><em>default=3</em>) -- Number of cross-validation folds used for model selection.</p></li>
+<li><p><strong>maxpool_percentages</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>default=</em><em>[</em><em>0.01</em><em>, </em><em>1</em><em>, </em><em>5</em><em>, </em><em>20</em><em>, </em><em>100</em><em>]</em>) -- Candidate percentages of top-responding cells pooled per filter,
+searched during hyperparameter selection.</p></li>
+<li><p><strong>nfilter_selection</strong> (<em>list</em><em> of </em><em>int</em><em>, </em><em>default=</em><em>[</em><em>3</em><em>, </em><em>4</em><em>, </em><em>5</em><em>, </em><em>6</em><em>, </em><em>7</em><em>, </em><em>8</em><em>, </em><em>9</em><em>, </em><em>10</em><em>]</em>) -- Candidate numbers of convolutional filters, searched during
+hyperparameter selection.</p></li>
+<li><p><strong>filter_threshold</strong> (<em>float</em><em>, </em><em>default=0.9</em>) -- Threshold on the filter response above which a cell is considered
+a high-response cell.</p></li>
+<li><p><strong>dropout</strong> (<em>bool</em><em>, </em><em>default=True</em>) -- Whether to apply dropout during training.</p></li>
+<li><p><strong>dropout_p</strong> (<em>float</em><em>, </em><em>default=0.5</em>) -- Dropout probability, used if <code class="docutils literal notranslate"><span class="pre">dropout</span></code> is True.</p></li>
+<li><p><strong>bg_sets</strong> (<em>int</em><em>, </em><em>default=500</em>) -- Number of random background cell sets generated when
+<code class="docutils literal notranslate"><span class="pre">random_ctrl</span></code> is True.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>default=256</em>) -- Training batch size.</p></li>
+<li><p><strong>lr</strong> (<em>float</em><em>, </em><em>default=0.1</em>) -- Learning rate.</p></li>
+<li><p><strong>l2</strong> (<em>float</em><em>, </em><em>default=1e-4</em>) -- L2 regularization strength (weight decay).</p></li>
+<li><p><strong>epochs</strong> (<em>int</em><em>, </em><em>default=20</em>) -- Maximum number of training epochs.</p></li>
+<li><p><strong>num_workers</strong> (<em>int</em><em>, </em><em>default=0</em>) -- Number of worker processes for data loading.</p></li>
+<li><p><strong>early_stopping</strong> (<em>bool</em><em>, </em><em>default=True</em>) -- Whether to stop training when the validation loss stops improving.</p></li>
+<li><p><strong>patience</strong> (<em>int</em><em>, </em><em>default=3</em>) -- Number of epochs without improvement before early stopping is
+triggered.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>default=420</em>) -- Random seed for reproducibility.</p></li>
+<li><p><strong>save_path</strong> (<em>str</em><em>, </em><em>default=&quot;.&quot;</em>) -- Directory where the trained model results, figures and enrichment
+statistics are saved.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>All outputs (model results, filter weight plots, high-response cell
+statistics and enrichment summaries for the train and test sets)
+are written to <code class="docutils literal notranslate"><span class="pre">save_path</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">run_s3cima</span><span class="p">(</span>
+<span class="go">            "BG",</span>
+<span class="go">            image_id,</span>
+<span class="go">            sample_id,</span>
+<span class="go">            intensity,</span>
+<span class="go">            genes,</span>
+<span class="go">            cell_type,</span>
+<span class="go">            x,</span>
+<span class="go">            y,</span>
+<span class="go">            cell_id,</span>
+<span class="go">            labels,</span>
+<span class="go">            label_map,</span>
+<span class="go">            K=50,</span>
+<span class="go">            ncell = 30,</span>
+<span class="go">            random_ctrl=False,</span>
+<span class="go">            n_val_folds=3,</span>
+<span class="go">            bg_sets=1000,    # Number of random background sets to draw from each sample/patient</span>
+<span class="go">            num_workers=24,</span>
+<span class="go">            batch_size=128,</span>
+<span class="go">            lr = 0.001,</span>
+<span class="go">            nruns=10,</span>
+<span class="go">            save_path = save_path,</span>
+<span class="go">            seed=43</span>
+<span class="go">            )</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="s3cima.model.html" class="btn btn-neutral float-right" title="S3-CIMA Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Gabriel Duval.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

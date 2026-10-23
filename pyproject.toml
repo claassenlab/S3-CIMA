@@ -29,3 +29,11 @@ python = ">=3.10"
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+docs = [
+    "myst-nb (>=1.4.0,<2.0.0)"
+]
+
+[project.urls]
+Documentation = "https://your-package.readthedocs.io"

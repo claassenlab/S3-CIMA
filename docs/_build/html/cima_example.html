@@ -1,0 +1,226 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="English" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quickstart with S3-CIMA &mdash; S3-CIMA 23/10/2026 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+      <link rel="stylesheet" type="text/css" href="_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=eadfcba0"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="S3-CIMA documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            S3-CIMA
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quickstart with S3-CIMA</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">S3-CIMA</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quickstart with S3-CIMA</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/cima_example.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quickstart-with-s3-cima">
+<h1>Quickstart with S3-CIMA<a class="headerlink" href="#quickstart-with-s3-cima" title="Link to this heading"></a></h1>
+<p>Test the loading of the S3-CIMA Pytorch package. Make sure to pip install the package into an environment before running:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install s3cima
+</pre></div>
+</div>
+<p>S3-CIMA provides two main functions - the first is the process_csv function, to pre-process input data and filter any unwanted/outlier cell types. The second is the run_s3cima function, to run a s3-cima analysis.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">s3cima.utils.preprocess</span><span class="w"> </span><span class="kn">import</span> <span class="n">process_csv</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>The process_csv function requires two inputs csvs - a marker csv (containing log-normalised gene expression) and a paired metadata csv. These MUST be paired, aka the cell on the 5th row of the markers csv must be the same as the cell on the 5th row of the metadata csv. Additionally, in the process_csv function, you must specify the column names of some important variables which S3-CIMA uses and that are in the metadata csv :</p>
+<ul class="simple">
+<li><p>x_col : The 'X' coordinate of cells</p></li>
+<li><p>y_col : The 'Y' coordinate of cells</p></li>
+<li><p>cell_id_col : A unique cell id to identify each cell</p></li>
+<li><p>cell_type_col : The annotated cell types of each cell</p></li>
+<li><p>sample_id_col : The patient/sample unique id</p></li>
+<li><p>image_id_col : A unique id for each image (NOTE - if your dataset has only one image per patient/sample, DO NOT re-use the patient id column - create and assign a unique image id column anyways)</p></li>
+<li><p>condition_col : This is the outcome column of interest (disease conditions for a classification for instance)</p></li>
+<li><p>filter_cell_types : An optional argument - should be a list of strings to determine whether some cell types should be removed from the csv.</p></li>
+</ul>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load data</span>
+<span class="n">intensity</span><span class="p">,</span> <span class="n">genes</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cell_id</span><span class="p">,</span> <span class="n">cell_type</span><span class="p">,</span> <span class="n">sample_id</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">label_map</span> <span class="o">=</span> <span class="n">process_csv</span><span class="p">(</span>
+    <span class="n">markers_path</span>      <span class="o">=</span> <span class="s2">"/Users/bobsmith/Documents/S3-CIMA/tests/data/cima_test_markers.csv"</span><span class="p">,</span>
+    <span class="n">meta_path</span>         <span class="o">=</span> <span class="s2">"/Users/bobsmith/Documents/S3-CIMA/tests/data/cima_test_meta.csv"</span><span class="p">,</span>
+    <span class="n">x_col</span>             <span class="o">=</span> <span class="s2">"spatial_dim0"</span><span class="p">,</span>
+    <span class="n">y_col</span>             <span class="o">=</span> <span class="s2">"spatial_dim1"</span><span class="p">,</span>
+    <span class="n">cell_id_col</span>       <span class="o">=</span> <span class="s2">"cell_id"</span><span class="p">,</span>
+    <span class="n">cell_type_col</span>     <span class="o">=</span> <span class="s2">"cell_type"</span><span class="p">,</span>
+    <span class="n">sample_id_col</span>     <span class="o">=</span> <span class="s2">"sample"</span><span class="p">,</span>
+    <span class="n">image_id_col</span>      <span class="o">=</span> <span class="s2">"image_id"</span><span class="p">,</span>
+    <span class="n">condition_col</span>     <span class="o">=</span> <span class="s2">"condition"</span><span class="p">,</span>
+    <span class="n">filter_cell_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Schwann_cells"</span><span class="p">,</span> <span class="s2">"Muscular_cells"</span><span class="p">],</span>   <span class="c1"># or None to keep all</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Once this has run, you are ready to run an S3-CIMA analysis.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">s3cima.s3cima</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_s3cima</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>There are a lot of arguments in the s3cima function that you can modify depending on your need. Documentation on the run_s3cima function will soon be available. Below is a base level example with some simple yet critical parameters for an anchor CD8 cell type :</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">save_path</span> <span class="o">=</span> <span class="s2">"enter/the/path/to/save/output/here"</span>
+
+<span class="n">run_s3cima</span><span class="p">(</span>
+    <span class="s2">"CD8"</span><span class="p">,</span>
+    <span class="n">image_id</span><span class="p">,</span> 
+    <span class="n">sample_id</span><span class="p">,</span> 
+    <span class="n">intensity</span><span class="p">,</span> 
+    <span class="n">genes</span><span class="p">,</span> 
+    <span class="n">cell_type</span><span class="p">,</span> 
+    <span class="n">x</span><span class="p">,</span> 
+    <span class="n">y</span><span class="p">,</span> 
+    <span class="n">cell_id</span><span class="p">,</span> 
+    <span class="n">labels</span><span class="p">,</span>
+    <span class="n">label_map</span><span class="p">,</span>
+    <span class="n">K</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">ncell</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="n">random_ctrl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">n_val_folds</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">nruns</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">save_path</span> <span class="o">=</span> <span class="n">save_path</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">43</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<p>Another example this time using the background &quot;BG&quot; instead of a particular anchor - this selects anchor cells randomly instead of focusing on a specific cell type to classify. Can often be a good baseline.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">save_path</span> <span class="o">=</span> <span class="s2">"enter/the/path/to/save/output/here"</span>
+
+<span class="n">run_s3cima</span><span class="p">(</span>
+    <span class="s2">"BG"</span><span class="p">,</span>
+    <span class="n">image_id</span><span class="p">,</span> 
+    <span class="n">sample_id</span><span class="p">,</span> 
+    <span class="n">intensity</span><span class="p">,</span> 
+    <span class="n">genes</span><span class="p">,</span> 
+    <span class="n">cell_type</span><span class="p">,</span> 
+    <span class="n">x</span><span class="p">,</span> 
+    <span class="n">y</span><span class="p">,</span> 
+    <span class="n">cell_id</span><span class="p">,</span> 
+    <span class="n">labels</span><span class="p">,</span>
+    <span class="n">label_map</span><span class="p">,</span>
+    <span class="n">K</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+    <span class="n">ncell</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span>
+    <span class="n">random_ctrl</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">n_val_folds</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">bg_sets</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>    <span class="c1"># Number of random background sets to draw from each sample/patient</span>
+    <span class="n">num_workers</span><span class="o">=</span><span class="mi">24</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">lr</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="n">nruns</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">save_path</span> <span class="o">=</span> <span class="n">save_path</span><span class="p">,</span>
+    <span class="n">seed</span><span class="o">=</span><span class="mi">43</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="S3-CIMA documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2026, Gabriel Duval.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
