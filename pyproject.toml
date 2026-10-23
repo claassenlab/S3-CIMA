@@ -36,4 +36,4 @@ docs = [
 ]
 
 [project.urls]
-Documentation = "https://s3cima.readthedocs.io"
+Documentation = "https://s3-cima.readthedocs.io"

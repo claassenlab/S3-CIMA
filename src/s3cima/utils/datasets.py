@@ -183,19 +183,19 @@ class CIMADataset(Dataset):
 
 
 class NormalizedCIMASubset(Dataset):
-    def __init__(self, subset: Subset, mean: torch.Tensor, std: torch.Tensor):
-        """
-        Wraps a Subset of CIMADataset to apply Z-score normalization.
+    """
+    Wraps a Subset of CIMADataset to apply Z-score normalization.
 
-        Parameters
-        ----------
-        subset : Subset
-            A subset of CIMADataset to wrap.
-        mean : torch.Tensor
-            Marker-wise mean for Z-score normalization.
-        std : torch.Tensor
-            Marker-wise standard deviation for Z-score normalization.
-        """
+    Parameters
+    ----------
+    subset : Subset
+        A subset of CIMADataset to wrap.
+    mean : torch.Tensor
+        Marker-wise mean for Z-score normalization.
+    std : torch.Tensor
+        Marker-wise standard deviation for Z-score normalization.
+    """
+    def __init__(self, subset: Subset, mean: torch.Tensor, std: torch.Tensor):
         self.subset = subset
         self.mean = mean
         self.std = std
